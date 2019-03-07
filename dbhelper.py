@@ -1,134 +1,51 @@
-import sqlite3
-from constants import *
+from constants import db
 
 
-class DB:
-    def __init__(self):
-        self.connection = None
+# Модель пользователя
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(80))
+    status = db.Column(db.String(80))
 
-    def connect(self, name="library.db"):
-        self.connection = sqlite3.connect(name, check_same_thread=False)
-
-    def get_connection(self):
-        return self.connection
-
-    def __del__(self):
-        self.connection.close()
+    def __repr__(self):
+        return f'User ID{self.id}. {self.username}: {self.status}'
 
 
-class Model:
-    def __init__(self, connection, table_name):
-        self.connection = connection
-        self.table_name = table_name
+# Модель книги
+class Book(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    author = db.relationship('Author', backref=db.backref('Author', lazy=True))
+    genre = db.relationship('Genre', backref=db.backref('Genre', lazy=True))
+    description = db.Column(db.String(1000), nullable=False)
+    user = db.relationship('User', backref=db.backref('Book', lazy=True))
+    image = db.Column(db.String(200))
+    file = db.Column(db.String(200))
 
-    def init_table(self):
-        pass
-
-    def get(self, id):
-        cursor = self.connection.cursor()
-        cursor.execute(f"SELECT * FROM {self.table_name} WHERE {KEY_ID} = ?", (str(id)))
-        row = cursor.fetchone()
-        return row
-
-    def get_all(self):
-        cursor = self.connection.cursor()
-        cursor.execute(f"SELECT * FROM {self.table_name}")
-        rows = cursor.fetchall()
-        return rows
-
-    def insert(self, item):
-        params = item.get_tuple()
-        cursor = self.connection.cursor()
-        cursor.execute(f"INSERT INTO {self.table_name} "
-                       f"VALUES({','.join(['?' for i in range(len(params))])})", params)
-        cursor.close()
-        self.connection.commit()
-
-    def delete(self, id):
-        cursor = self.connection.cursor()
-        cursor.execute(f"DELETE FROM {self.table_name} WHERE {KEY_ID} = ?", (str(id)))
-        cursor.close()
-        self.connection.commit()
-
-    def update(self, id, item):
-        params = item.get_tuple()
-        cursor = self.connection.cursor()
-        cursor.execute(f"UPDATE {self.table_name} "
-                       f"SET {','.join([a + ' = ?' for a in params])} WHERE {KEY_ID} = ?", *params, id)
-        cursor.close()
-        self.connection.commit()
+    def __repr__(self):
+        return f'{self.name}, {self.author.name}'
 
 
-class UserModel(Model):
-    def __init__(self, connection):
-        super().__init__(connection, TABLE_USERS)
-
-    def init_table(self):
-        cursor = self.connection.cursor()
-        cursor.execute(f'''CREATE TABLE IF NOT EXISTS {TABLE_USERS} (
-                            {KEY_USER_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                            {KEY_USER_NAME} VARCHAR(50) NOT NULL,
-                            {KEY_USER_PSWD} VARCHAR(128) NOT NULL,
-                            {KEY_USER_STATUS_ID} INTEGER NOT NULL)''')
-        cursor.close()
-        self.connection.commit()
+# Модель автора
+class Author(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    image = db.Column(db.String(80))
+    description = db.Column(db.String(1000))
 
 
-class BookModel(Model):
-    def __init__(self, connection):
-        super().__init__(connection, TABLE_BOOKS)
-
-    def init_table(self):
-        cursor = self.connection.cursor()
-        cursor.execute(f'''CREATE TABLE IF NOT EXISTS {TABLE_BOOKS} (
-                            {KEY_BOOK_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                            {KEY_BOOK_NAME} VARCHAR(50) NOT NULL,
-                            {KEY_BOOK_AUTHOR_ID} INTEGER NOT NULL,
-                            {KEY_BOOK_GENRE_ID} INTEGER NOT NULL,
-                            {KEY_BOOK_DESCRIPTION} text,
-                            {KEY_BOOK_USER_ID} INTEGER NOT NULL,
-                            {KEY_BOOK_IMAGE} text,
-                            {KEY_BOOK_FILE} text)''')
-        cursor.close()
-        self.connection.commit()
+# Модель жанра
+class Genre(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80))
 
 
-class AuthorModel(Model):
-    def __init__(self, connection):
-        super().__init__(connection, TABLE_AUTHORS)
-
-    def init_table(self):
-        cursor = self.connection.cursor()
-        cursor.execute(f'''CREATE TABLE IF NOT EXISTS {TABLE_AUTHORS} (
-                            {KEY_AUTHOR_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                            {KEY_AUTHOR_NAME} VARCHAR(75) NOT NULL,
-                            {KEY_AUTHOR_IMAGE} text,
-                            {KEY_AUTHOR_DESCRIPTION} text)''')
-        cursor.close()
-        self.connection.commit()
+# Модель лайка
+class Like(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=False)
 
 
-class GenreModel(Model):
-    def __init__(self, connection):
-        super().__init__(connection, TABLE_GENRES)
-
-    def init_table(self):
-        cursor = self.connection.cursor()
-        cursor.execute(f'''CREATE TABLE IF NOT EXISTS {TABLE_GENRES} (
-                            {KEY_GENRE_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                            {KEY_GENRE_NAME} text NOT NULL)''')
-        cursor.close()
-        self.connection.commit()
-
-
-class StatusModel(Model):
-    def __init__(self, connection):
-        super().__init__(connection, TABLE_STATUSES)
-
-    def init_table(self):
-        cursor = self.connection.cursor()
-        cursor.execute(f'''CREATE TABLE IF NOT EXISTS {TABLE_STATUSES} (
-                            {KEY_STATUS_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-                            {KEY_STATUS_NAME} text NOT NULL)''')
-        cursor.close()
-        self.connection.commit()
+db.create_all()
