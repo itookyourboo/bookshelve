@@ -5,7 +5,7 @@ from constants import db
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(80))
+    password_hash = db.Column(db.String(93), nullable=False)
     status = db.Column(db.String(80))
 
     def __repr__(self):
@@ -15,11 +15,15 @@ class User(db.Model):
 # Модель книги
 class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), nullable=False)
-    author = db.relationship('Author', backref=db.backref('Author', lazy=True))
-    genre = db.relationship('Genre', backref=db.backref('Genre', lazy=True))
+    title = db.Column(db.String(80), nullable=False)
+    # author = db.relationship('Author', backref=db.backref('books', lazy=True))
+    # genre = db.relationship('Genre', backref=db.backref('books', lazy=True))
     description = db.Column(db.String(1000), nullable=False)
-    user = db.relationship('User', backref=db.backref('Book', lazy=True))
+
+    uploader_id = db.Column(db.Integer,
+                            db.ForeignKey('user.id'),
+                            nullable=False)
+    uploader = db.relationship('User', backref=db.backref('books', lazy=True))
     image = db.Column(db.String(200))
     file = db.Column(db.String(200))
 
