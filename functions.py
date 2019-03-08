@@ -1,30 +1,32 @@
-from constants import db
+from constants import db, STATUSES
 from dbhelper import *
+from werkzeug.security import generate_password_hash, \
+     check_password_hash
 
 
 # Вход в систему
 def login_user(username, password):
-    userModel = User.query.filter_by(username=username, password=password).first()
-    if userModel:
-        return {
+    userModel = User.query.filter_by(username=username).first()
+    if userModel and check_password_hash(userModel.password_hash, password):
+        return True, {
             'username': username,
             'user_id': userModel.id
         }
-    return 'Неверный логин или пароль'
+    return False, 'Неверный логин или пароль'
 
 
-#Регистрация
+# Регистрация
 def logup_user(username, password):
     userModel = User.query.filter_by(username=username).first()
     if userModel:
-        return 'Пользователь с таким логином уже существует'
+        return False, 'Пользователь с таким логином уже существует'
     else:
         user = User(username=username,
-                         password=password,
-                         status='Пользователь')
+                    password_hash=generate_password_hash(password),
+                    status=STATUSES['user'])
         db.session.add(user)
         db.session.commit()
-        return {
+        return True, {
             'username': username,
             'user_id': user.id
         }
