@@ -2,76 +2,97 @@ import functions
 from dbhelper import *
 from constants import *
 
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.validators import DataRequired
-from flask import Flask
+from flask import Flask, session
 from flask import request, redirect, url_for, render_template
-from flask_sqlalchemy import SQLAlchemy
-from requests import get, post, delete, put
-
-
-session = {}
-
-
-class LoginForm(FlaskForm):
-    username = StringField('Логин', validators=[DataRequired()])
-    password = PasswordField('Пароль', validators=[DataRequired()])
-    remember_me = BooleanField('Запомнить меня')
-    login = SubmitField('Войти')
-    logup = SubmitField('Регистрация')
-
-
-class LogupForm(FlaskForm):
-    username = StringField('Логин', validators=[DataRequired()])
-    password = PasswordField('Пароль', validators=[DataRequired()])
-    logup = SubmitField('Регистрация')
+from forms import LoginForm, RegisterForm, AddBookForm
+from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
+import os
+from functions import transliterate
 
 
 @app.route('/')
-@app.route('/index', methods=['GET', 'POST'])
+@app.route('/index')
 def index():
-    if 'username' not in session:
-        return redirect('/login')
-
     return render_template('index.html', title=TITLE, session=session)
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    if request.method == 'POST':
-        is_login_form = form.login.data
-        if is_login_form:
-            username = form.username.data
-            password = form.password.data
-            result = functions.login_user(username, password)
-            if result[0]:
-                session['username'], session['user_id'] = result[1]['username'], result[1]['user_id']
-                return redirect('/index')
-            return render_template('login.html', error=result[1], title=TITLE, form=form)
-        return redirect('/logup')
-    return render_template('login.html', title=TITLE, form=form)
-
-
-@app.route('/logup', methods=['GET', 'POST'])
-def logup():
-    form = LogupForm()
     if form.validate_on_submit():
-        username = form.username.data
-        password = form.password.data
-        result = functions.logup_user(username, password)
-        if result[0]:
-            session['username'], session['user_id'] = result[1]['username'], result[1]['user_id']
+        user = User.query.filter_by(username=form.username.data).first()
+        if user and check_password_hash(user.password_hash, form.password.data):
+            session.clear()
+            session['username'] = user.username
+            session['user_id'] = user.id
             return redirect('/index')
-        return render_template('logup.html', error=result[1], title=TITLE, form=form)
-    return render_template('logup.html', title=TITLE, form=form)
+        form.submit.errors.append('Неправильный логин или пароль')
+    return render_template('login.html', title='Вход', form=form)
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        if User.query.filter_by(username=form.username.data).first() is None:
+            user = User(username=form.username.data,
+                        password_hash=generate_password_hash(form.password.data),
+                        status=STATUSES['user'])
+            db.session.add(user)
+            db.session.commit()
+
+            user = User.query.filter_by(username=form.username.data).first()
+            session.clear()
+            session['username'] = user.username
+            session['user_id'] = user.id
+            return redirect('/index')
+        form.submit.errors.append('Пользователь с таким логином уже существует')
+    return render_template('register.html', title='Регистрация', form=form)
 
 
 @app.route('/logout')
 def logout():
-    functions.logout(session)
-    return redirect('/index')
+    session.clear()
+    return redirect('/login')
+
+
+@app.route('/add_book', methods=['GET', 'POST'])
+def add_book():
+    if 'username' not in session:
+        return redirect('/login')
+
+    form = AddBookForm()
+    if form.validate_on_submit():
+        img_name, file_name = form.image.data.filename, form.file.data.filename
+        if '.' in img_name and '.' in file_name:
+            img_ext = img_name.rsplit('.', 1)[1].lower()
+            file_ext = file_name.rsplit('.', 1)[1].lower()
+            if img_ext in ALLOWED_IMAGES_EXTENSIONS and file_ext in ALLOWED_BOOKS_EXTENSIONS:
+                book = Book(title=form.title.data, description=form.desc.data)
+                user = User.query.filter_by(id=session['user_id']).first()
+                user.books.append(book)
+                db.session.commit()
+
+                book = Book.query.filter_by(title=form.title.data).first()
+                path = os.path.join(app.config['UPLOAD_FOLDER'], str(book.id))
+                os.mkdir(path)
+
+                book.image = os.path.join(path, 'image.' + img_ext)
+                with open(book.image, 'wb') as img:
+                    img.write(request.files[form.image.name].read())
+
+                book.file = os.path.join(path, transliterate(
+                    '_'.join(book.title.split())) + '.' + file_ext)
+                with open(book.file, 'wb') as f:
+                    f.write(request.files[form.image.name].read())
+                db.session.commit()
+                return redirect('/index')
+
+            form.submit.errors.append('Запрещенный формат файла')
+        form.submit.errors.append('Имена файлов должны содержать расширение.')
+
+    return render_template('add_book.html', title='Добавить книгу', form=form)
 
 
 if __name__ == '__main__':
