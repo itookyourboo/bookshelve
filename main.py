@@ -9,11 +9,11 @@ from forms import *
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import os
-from functions import transliterate
+from functions import transliterate, like
 
 
 @app.route('/')
-@app.route('/index')
+@app.route('/books')
 def index():
     books = Book.query.order_by(Book.id.desc()).all()
     for book in books:
@@ -64,7 +64,7 @@ def logout():
     return redirect('/login')
 
 
-@app.route('/add_book', methods=['GET', 'POST'])
+@app.route('/books/add', methods=['GET', 'POST'])
 def add_book():
     if 'username' not in session:
         return redirect('/login')
@@ -107,11 +107,18 @@ def add_book():
 def get_book(book_id):
     book = Book.query.filter_by(id=book_id).first()
     print(book.uploader)
+
     if request.method == 'POST':
         if 'user_id' in session:
-            return send_file(book.file, as_attachment=True)
-        return redirect('/login')
-    return render_template('book.html', title=book.title, book=book)
+            if 'download' in request.form:
+                return send_file(book.file, as_attachment=True)
+            elif 'like' in request.form:
+                like(session['user_id'], book_id)
+        else:
+            return redirect('/login')
+    return render_template('book.html', title=book.title, book=book,
+                           is_liked=bool(Like.query.filter_by(user_id=session['user_id'],
+                                                              book_id=book_id).first()))
 
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -128,8 +135,8 @@ def admin():
             functions.change_status(id, status_form.status_select.data)
             status_message = 'Статус успешно изменён'
         return render_template('admin.html', title='ADMIN',
-                                   status_form=status_form, ban_form=ban_form, info_form=info_form,
-                                   status_message=status_message)
+                               status_form=status_form, ban_form=ban_form, info_form=info_form,
+                               status_message=status_message)
 
     if ban_form.ban_submit.data and ban_form.validate_on_submit():
         id = ban_form.ban_field.data

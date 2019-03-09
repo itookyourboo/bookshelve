@@ -6,23 +6,50 @@
     <div class="container">
         <div class="row">
             <div class="col-9">
-                <div class="alert alert-dark" role="alert" style="height:100%; word-wrap: normal; overflow: auto">
+                <div class="alert alert-dark" role="alert"
+                     style="height:100%; word-wrap: normal; overflow: auto">
                     {{ book.description }}
                 </div>
             </div>
             <div class="col">
-                <img class="book-img rounded" width="200" height="300" src="\{{ book.image }}" alt="{{ book.title }}">
+                <img class="book-img rounded" width="200" height="300" src="\{{ book.image }}"
+                     alt="{{ book.title }}">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-9" align="center">
+                <form action="" method="post" novalidate>
+                    <br>
+                    <button type="submit" class="btn btn-primary" name="download">
+                        {% if 'user_id' in session %}
+                            Скачать
+                        {% else %}
+                            Войдите, чтобы скачать файл
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+            <div class="col">
+                <form action="" method="post" novalidate>
+                    <br>
+                    <button type="submit" class="btn btn-danger" name="like">
+                        {% if is_liked %}
+                            &#9829
+                        {% else %}
+                            &#9825
+                        {% endif %}
+                     Мне нравится
+                    </button>
+                </form>
             </div>
         </div>
     </div>
-    <form method="post">
-        <br>
-        <button type="submit" class="btn btn-primary">
-            {% if 'user_id' in session %}
-            Скачать
-            {% else %}
-            Войдите, чтобы скачать файл
-            {% endif %}
-        </button>
-    </form>
+
 {% endblock %}
+
+<form action="" method="post" novalidate>
+    {{ info_form.hidden_tag() }}
+    {{ info_form.info_field.label }}
+    {{ info_form.info_field }}
+    {{ info_form.info_submit() }}
+</form>

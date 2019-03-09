@@ -14,7 +14,7 @@
 <header>
     <nav class="navbar navbar-light bg-light">
         <a class="navbar-brand" href="/">bookshelve</a>
-        <a class="navbar-brand" href="/add_book">Добавить книгу</a>
+        <a class="navbar-brand" href="/books/add">Добавить книгу</a>
 
         {% if 'username' in session %}
             <a class="navbar-brand" href="/logout">{{ session['username'] }}</a>
