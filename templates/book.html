@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <br>
+    <h1 style="color: #000000" align="center">{{ book.title }}</h1>
+    <div class="container">
+        <div class="row">
+            <div class="col-9">
+                <div class="alert alert-dark" role="alert" style="height:100%; word-wrap: normal; overflow: auto">
+                    {{ book.description }}
+                </div>
+            </div>
+            <div class="col">
+                <img class="book-img rounded" width="200" height="300" src="\{{ book.image }}" alt="{{ book.title }}">
+            </div>
+        </div>
+    </div>
+    <form method="post">
+        <br>
+        <button type="submit" class="btn btn-primary">
+            {% if 'user_id' in session %}
+            Скачать
+            {% else %}
+            Войдите, чтобы скачать файл
+            {% endif %}
+        </button>
+    </form>
+{% endblock %}

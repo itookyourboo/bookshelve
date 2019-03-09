@@ -2,7 +2,7 @@ import functions
 from dbhelper import *
 from constants import *
 
-from flask import Flask, session
+from flask import Flask, session, send_from_directory, send_file
 from flask import request, redirect, url_for, render_template
 from forms import LoginForm, RegisterForm, AddBookForm
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -80,8 +80,8 @@ def add_book():
                 db.session.commit()
 
                 book = Book.query.filter_by(title=form.title.data).first()
-                path = app.config['UPLOAD_FOLDER'] + str(book.id)
-                # path = os.path.join(app.config['UPLOAD_FOLDER'], str(book.id))
+                # path = app.config['UPLOAD_FOLDER'] + str(book.id)
+                path = os.path.join(app.config['UPLOAD_FOLDER'], str(book.id))
                 os.mkdir(path)
 
                 book.image = os.path.join(path, 'image.' + img_ext)
@@ -99,6 +99,16 @@ def add_book():
         form.submit.errors.append('Имена файлов должны содержать расширение.')
 
     return render_template('add_book.html', title='Добавить книгу', form=form)
+
+
+@app.route('/books/<int:book_id>', methods=['GET', 'POST'])
+def get_book(book_id):
+    book = Book.query.filter_by(id=book_id).first()
+    if request.method == 'POST':
+        if 'user_id' in session:
+            return send_file(book.file, as_attachment=True)
+        return redirect('/login')
+    return render_template('book.html', title=book.title, book=book)
 
 
 if __name__ == '__main__':
