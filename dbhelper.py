@@ -27,6 +27,8 @@ class Book(db.Model):
     image = db.Column(db.String(200))
     file = db.Column(db.String(200))
 
+    likes = 0
+
     def __repr__(self):
         return f'{self.name}, {self.author.name}'
 

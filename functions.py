@@ -1,5 +1,6 @@
 from constants import db, STATUSES
 from dbhelper import *
+import shutil
 from werkzeug.security import generate_password_hash, \
     check_password_hash
 
@@ -59,6 +60,17 @@ def edit_book(id, **keys):
     book = Book.query.filter_by(id=id).first()
     for key in keys:
         exec(f'book.{key} = {keys[key]}')
+    db.session.commit()
+
+
+# Бан пользователя и его книг
+def ban_user(user_id):
+    user = User.query.filter_by(id=user_id).first()
+    books = Book.query.filter_by(uploader_id=user_id).all()
+    db.session.delete(user)
+    for book in books:
+        db.session.delete(book)
+        shutil.rmtree(f'static/books/{book.id}', ignore_errors=True)
     db.session.commit()
 
 

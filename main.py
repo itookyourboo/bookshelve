@@ -4,7 +4,8 @@ from constants import *
 
 from flask import Flask, session, send_from_directory, send_file
 from flask import request, redirect, url_for, render_template
-from forms import LoginForm, RegisterForm, AddBookForm
+# from forms import LoginForm, RegisterForm, AddBookForm, StatusForm
+from forms import *
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import os
@@ -17,7 +18,8 @@ def index():
     books = Book.query.order_by(Book.id.desc()).all()
     for book in books:
         if not book.image:
-            book.image = '/static/placeholder_book.jpg'
+            book.image = 'static/placeholder_book.jpg'
+        book.likes = functions.get_likes(book.id)
     return render_template('index.html', title=TITLE, session=session,
                            books=books, columns=app.config['BOOKS_COLUMNS'])
 
@@ -104,11 +106,61 @@ def add_book():
 @app.route('/books/<int:book_id>', methods=['GET', 'POST'])
 def get_book(book_id):
     book = Book.query.filter_by(id=book_id).first()
+    print(book.uploader)
     if request.method == 'POST':
         if 'user_id' in session:
             return send_file(book.file, as_attachment=True)
         return redirect('/login')
     return render_template('book.html', title=book.title, book=book)
+
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    status_form = StatusForm()
+    ban_form = BanForm()
+    info_form = InfoForm()
+
+    if status_form.status_submit.data and status_form.validate_on_submit():
+        id = status_form.status_field.data
+        user = User.query.filter_by(id=id).first()
+        status_message = 'Пользователь не существует'
+        if user:
+            functions.change_status(id, status_form.status_select.data)
+            status_message = 'Статус успешно изменён'
+        return render_template('admin.html', title='ADMIN',
+                                   status_form=status_form, ban_form=ban_form, info_form=info_form,
+                                   status_message=status_message)
+
+    if ban_form.ban_submit.data and ban_form.validate_on_submit():
+        id = ban_form.ban_field.data
+        user = User.query.filter_by(id=id).first()
+        ban_message = 'Пользователь не существует'
+        if user:
+            functions.ban_user(id)
+            ban_message = 'Пользователь забанен/удалён'
+
+        return render_template('admin.html', title='ADMIN',
+                               status_form=status_form, ban_form=ban_form, info_form=info_form,
+                               ban_message=ban_message)
+
+    if info_form.info_submit and info_form.validate_on_submit():
+        id = info_form.info_field.data
+        user = User.query.filter_by(id=id).first()
+        info_message = 'Пользователь не существует'
+        if user:
+            status = user.status
+            books = Book.query.filter_by(uploader_id=id).count()
+            likes = Like.query.filter_by(user_id=id).count()
+            username, books_count = user.username, books
+
+            info_message = f"ID{id}: {username} ({status}).<br>Загрузил книг: {books_count}<br>Поставил лайков: {likes}"
+
+        return render_template('admin.html', title='ADMIN',
+                               status_form=status_form, ban_form=ban_form, info_form=info_form,
+                               info_message=info_message)
+
+    return render_template('admin.html', title='ADMIN',
+                           status_form=status_form, ban_form=ban_form, info_form=info_form)
 
 
 if __name__ == '__main__':

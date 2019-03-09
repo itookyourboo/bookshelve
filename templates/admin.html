@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+ 
+{% block content %}
+    <h2>Изменение статуса</h2>
+    <form action="" method="post" novalidate>
+        {{ status_form.hidden_tag() }}
+        {{ status_form.status_field.label }}
+        {{ status_form.status_field }}
+        {{ status_form.status_select }}
+        {{ status_form.status_submit() }}
+    </form>
+    <h4>{{ status_message }}</h4>
+    <br>
+    <h2>Информация о пользователе</h2>
+    <form action="" method="post" novalidate>
+        {{ info_form.hidden_tag() }}
+        {{ info_form.info_field.label }}
+        {{ info_form.info_field }}
+        {{ info_form.info_submit() }}
+    </form>
+    {% autoescape false %}
+        {{ info_message }}
+    {% endautoescape %}
+    <br>
+    <h2>Забанить пользователя</h2>
+    <form action="" method="post" novalidate>
+        {{ ban_form.hidden_tag() }}
+        {{ ban_form.ban_field.label }}
+        {{ ban_form.ban_field }}
+        {{ ban_form.ban_submit() }}
+    </form>
+    <h4>{{ ban_message }}</h4>
+    <br>
+{% endblock %}

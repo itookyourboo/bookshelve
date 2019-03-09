@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, IntegerField, SelectField
 from wtforms.validators import DataRequired, EqualTo, Length
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from constants import *
@@ -50,3 +50,19 @@ class AddBookForm(FlaskForm):
     ])
 
     submit = SubmitField('Загрузить')
+
+
+class StatusForm(FlaskForm):
+    status_field = IntegerField('ID', validators=[DataRequired(message='Поле обязательно для заполнения')])
+    status_select = SelectField(choices=[(a, a) for a in list(STATUSES.values())])
+    status_submit = SubmitField('OK')
+
+
+class BanForm(FlaskForm):
+    ban_field = IntegerField('ID', validators=[DataRequired(message='Поле обязательно для заполнения')])
+    ban_submit = SubmitField('OK')
+
+
+class InfoForm(FlaskForm):
+    info_field = IntegerField('ID', validators=[DataRequired(message='Поле обязательно для заполнения')])
+    info_submit = SubmitField('OK')
