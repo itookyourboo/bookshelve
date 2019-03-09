@@ -14,7 +14,12 @@ from functions import transliterate
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('index.html', title=TITLE, session=session)
+    books = Book.query.order_by(Book.id.desc()).all()
+    for book in books:
+        if not book.image:
+            book.image = '/static/placeholder_book.jpg'
+    return render_template('index.html', title=TITLE, session=session,
+                           books=books, columns=app.config['BOOKS_COLUMNS'])
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -75,7 +80,8 @@ def add_book():
                 db.session.commit()
 
                 book = Book.query.filter_by(title=form.title.data).first()
-                path = os.path.join(app.config['UPLOAD_FOLDER'], str(book.id))
+                path = app.config['UPLOAD_FOLDER'] + str(book.id)
+                # path = os.path.join(app.config['UPLOAD_FOLDER'], str(book.id))
                 os.mkdir(path)
 
                 book.image = os.path.join(path, 'image.' + img_ext)

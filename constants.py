@@ -21,6 +21,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATABASE_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
 app.config['UPLOAD_FOLDER'] = 'static/books'
+app.config['BOOKS_COLUMNS'] = 4
 db = SQLAlchemy(app)
 
 # api = Api(app, catch_all_404s=True)
