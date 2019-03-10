@@ -56,6 +56,28 @@ class AddBookForm(FlaskForm):
     submit = SubmitField('Загрузить')
 
 
+class EditBookForm(FlaskForm):
+    title = StringField('Название', validators=[
+        Length(max=80, message='Название должно быть не длинее 80 символов')])
+
+    author = StringField('Автор', validators=[
+        Length(max=80, message='Имя автора должно быть не длиннее 80 символов')])
+
+    desc = TextAreaField('Описание книги', validators=[
+        Length(max=1000, message='Описание должно быть не длинее 1000 символов')])
+
+    image = FileField('Обложка', validators=[
+        FileAllowed(list(ALLOWED_IMAGES_EXTENSIONS),
+                    'Неподдерживаемый формат изображения')
+    ])
+    file = FileField('Книга', validators=[
+        FileAllowed(list(ALLOWED_BOOKS_EXTENSIONS),
+                    'Неподдерживаемый формат книги')
+    ])
+
+    submit = SubmitField('Редактировать')
+
+
 class StatusForm(FlaskForm):
     status_field = IntegerField('ID', validators=[DataRequired(message='Поле обязательно для заполнения')])
     status_select = SelectField(choices=[(a, a) for a in list(STATUSES.values())])

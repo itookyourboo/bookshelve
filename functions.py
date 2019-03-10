@@ -10,6 +10,17 @@ def is_admin(session):
     return 'user_id' in session and Admin.query.filter_by(user_id=session['user_id']).first()
 
 
+# Проверка на модератора
+def is_moder(session):
+    return 'user_id' in session and Moder.query.filter_by(user_id=session['user_id']).first()
+
+
+def can_edit(session, book_id):
+    if not 'user_id' in session:
+        return False
+    return is_moder(session) or Book.query.filter_by(id=book_id, uploader_id=session['user_id']).first()
+
+
 # Изменить статус пользователя (пользователь, модератор, администратор)
 def change_status(user_id, status):
     moder = Moder.query.filter_by(user_id=user_id).first()
@@ -116,14 +127,6 @@ def get_likes(book_id):
     return Like.query.filter_by(book_id=book_id).count()
 
 
-# Удаление книги и лайков на ней
-def delete_book(book_id):
-    book = Book.query.filter_by(id=book_id).first()
-    db.session.query(Like).filter(Like.book_id==book.id).delete()
-    db.session.delete(book)
-    shutil.rmtree(f'static/books/{book.id}', ignore_errors=True)
-
-
 # Добавление жанра
 def add_genre(name):
     db.session.add(Genre(name=name))
@@ -188,6 +191,16 @@ def transliterate(string):
     return string
 
 
+# Удаление книги и лайков на ней
+def delete_book(book_id):
+    book = Book.query.filter_by(id=book_id).first()
+    db.session.query(Like).filter(Like.book_id==book.id).delete()
+    db.session.delete(book)
+    shutil.rmtree(f'static/books/{book.id}', ignore_errors=True)
+    db.session.commit()
+
+
+# Удаление всех книг
 def delete_all_books():
     db.session.query(Book).delete()
     db.session.commit()

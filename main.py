@@ -105,7 +105,7 @@ def add_book():
                 return redirect('/')
 
             form.submit.errors.append('Запрещенный формат файла')
-        form.submit.errors.append('Имена файлов должны содержать расширение.')
+        form.submit.errors.append('Имена файлов должны содержать расширение')
 
     return render_template('add_book.html', title='Добавить книгу', form=form)
 
@@ -113,7 +113,6 @@ def add_book():
 @app.route('/books/<int:book_id>', methods=['GET', 'POST'])
 def get_book(book_id):
     book = Book.query.filter_by(id=book_id).first()
-    print(book.uploader)
 
     if request.method == 'POST':
         if 'user_id' in session:
@@ -123,9 +122,84 @@ def get_book(book_id):
                 like(session['user_id'], book_id)
         else:
             return redirect('/login')
+
+    moder, is_liked = False, False
+    if 'user_id' in session:
+        is_liked = bool(Like.query.filter_by(user_id=session['user_id']).first())
+        moder = Moder.query.filter_by(user_id=session['user_id']).first() or book.uploader_id == session['user_id']
+
     return render_template('book.html', title=book.title, book=book,
-                           is_liked=bool(Like.query.filter_by(user_id=session['user_id'],
-                                                              book_id=book_id).first()))
+                           is_liked=is_liked, moder=moder)
+
+
+@app.route('/books/edit/<int:book_id>', methods=['GET', 'POST'])
+def edit_book(book_id):
+    if not functions.can_edit(session, book_id):
+        return redirect('/')
+
+    book = Book.query.filter_by(id=book_id).first()
+    form = EditBookForm()
+    # form.title.data = book.title
+    # form.author.data = book.author
+    # form.desc.data = book.description
+
+    if form.validate_on_submit():
+        if form.image.data:
+            img_name = form.image.data.filename
+            if '.' in img_name:
+                img_ext = img_name.rsplit('.', 1)[1].lower()
+                if img_ext in ALLOWED_IMAGES_EXTENSIONS:
+                    path = os.path.join(app.config['UPLOAD_FOLDER'], str(book.id))
+
+                    if os.path.exists(book.image):
+                        os.remove(book.image)
+
+                    book.image = os.path.join(path, 'image.' + img_ext)
+                    with open(book.image, 'wb') as img:
+                        img.write(request.files[form.image.name].read())
+
+                form.submit.errors.append('Запрещенный формат файла')
+            form.submit.errors.append('Имена файлов должны содержать расширение')
+
+        if form.file.data:
+            file_name = form.file.data.filename
+            if '.' in file_name:
+                file_ext = file_name.rsplit('.', 1)[1].lower()
+                if file_ext in ALLOWED_BOOKS_EXTENSIONS:
+                    path = os.path.join(app.config['UPLOAD_FOLDER'], str(book.id))
+
+                    if os.path.exists(book.file):
+                        os.remove(book.file)
+
+                    book.file = os.path.join(path, transliterate(
+                        '_'.join(book.title.split())) + '.' + file_ext)
+                    with open(book.file, 'wb') as f:
+                        f.write(request.files[form.file.name].read())
+
+                form.submit.errors.append('Запрещенный формат файла')
+            form.submit.errors.append('Имена файлов должны содержать расширение')
+
+        if form.title.data:
+            book.title = form.title.data
+        if form.author.data:
+            book.author = form.author.data
+        if form.author.data:
+            book.description = form.desc.data
+
+        db.session.add(book)
+        db.session.commit()
+
+        return redirect(f'/books/{book.id}')
+
+    return render_template('edit_book.html', title='Редактирование книги', form=form)
+
+
+@app.route('/books/delete/<int:book_id>')
+def delete_book(book_id):
+    if functions.can_edit(session, book_id):
+        functions.delete_book(book_id)
+
+    return redirect('/')
 
 
 @app.route('/admin', methods=['GET', 'POST'])

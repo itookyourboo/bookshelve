@@ -53,6 +53,12 @@
         <div style="margin-top: 20px">
             <h4>Загрузил <a href="/users/{{book.uploader_id}}">{{ book.uploader.username }}</a></h4>
         </div>
+        {% if moder %}
+        <div>
+            <a href="/books/edit/{{book.id}}">Редактировать</a><br>
+            <a href="/books/delete/{{book.id}}">Удалить</a>
+        </div>
+        {% endif %}
     </div>
 
 {% endblock %}
