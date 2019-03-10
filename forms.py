@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField, IntegerField, SelectField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, IntegerField, \
+    SelectField
 from wtforms.validators import DataRequired, EqualTo, Length
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from constants import *
@@ -79,16 +80,41 @@ class EditBookForm(FlaskForm):
 
 
 class StatusForm(FlaskForm):
-    status_field = IntegerField('ID', validators=[DataRequired(message='Поле обязательно для заполнения')])
+    status_field = IntegerField('ID', validators=[
+        DataRequired(message='Поле обязательно для заполнения')])
     status_select = SelectField(choices=[(a, a) for a in list(STATUSES.values())])
     status_submit = SubmitField('OK')
 
 
 class BanForm(FlaskForm):
-    ban_field = IntegerField('ID', validators=[DataRequired(message='Поле обязательно для заполнения')])
+    ban_field = IntegerField('ID',
+                             validators=[DataRequired(message='Поле обязательно для заполнения')])
     ban_submit = SubmitField('OK')
 
 
 class InfoForm(FlaskForm):
-    info_field = IntegerField('ID', validators=[DataRequired(message='Поле обязательно для заполнения')])
+    info_field = IntegerField('ID',
+                              validators=[DataRequired(message='Поле обязательно для заполнения')])
     info_submit = SubmitField('OK')
+
+
+class SortForm(FlaskForm):
+    default_choices = []
+    order = SelectField('Сортировать новости по :', choices=default_choices,
+                        validators=[DataRequired()])
+
+    def set_default_choices(self, choices):
+        self.default_choices = choices.copy()
+        self.order.choices = choices.copy()
+
+    def update_default(self, order):
+        print(self.order.choices[0][0], order)
+        if self.order.choices[0][0] != order:
+            self.order.choices.clear()
+            [self.order.choices.append(choice) if choice[0] != order
+             else self.order.choices.insert(0, choice) for choice in self.default_choices]
+
+    def get_default(self):
+        return self.order.choices[0][0]
+
+    submit = SubmitField('Применить')

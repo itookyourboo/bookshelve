@@ -10,7 +10,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import os
 from functions import transliterate, like
-
+from sqlalchemy import desc, asc
 
 if not len(User.query.all()):
     admin = User(username=MAIN_ADMIN[0],
@@ -20,16 +20,29 @@ if not len(User.query.all()):
     print(functions.change_status(admin.id, STATUSES['admin']))
 
 
-@app.route('/')
-@app.route('/books')
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/books', methods=['GET', 'POST'])
 def index():
-    books = Book.query.order_by(Book.id.desc()).all()
+    form = SortForm()
+    form.set_default_choices([('id ↑', 'дате ↑'),
+                              ('id ↓', 'дате ↓'),
+                              ('title ↑', 'По названию ↑'),
+                              ('title ↓', 'По названию ↓'),
+                              ('author ↑', 'По автору ↑'),
+                              ('author ↓', 'По автору ↓'),
+                              ('likes ↑', 'По лайкам ↑'),
+                              ('likes ↓', 'По лайкам ↓')])
+    if form.validate_on_submit():
+        form.update_default(form.order.data)
+    order = form.get_default()
+    func = desc if order[-1] == '↑' else asc
+    books = Book.query.order_by(func(order[:-2]))
     for book in books:
         if not book.image:
             book.image = 'static/placeholder_book.jpg'
         book.likes = functions.get_likes(book.id)
     return render_template('index.html', title=TITLE, session=session,
-                           books=books, columns=app.config['BOOKS_COLUMNS'])
+                           books=books, columns=app.config['BOOKS_COLUMNS'], form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -83,7 +96,8 @@ def add_book():
             img_ext = img_name.rsplit('.', 1)[1].lower()
             file_ext = file_name.rsplit('.', 1)[1].lower()
             if img_ext in ALLOWED_IMAGES_EXTENSIONS and file_ext in ALLOWED_BOOKS_EXTENSIONS:
-                book = Book(title=form.title.data, author=form.author.data, description=form.description.data)
+                book = Book(title=form.title.data, author=form.author.data,
+                            description=form.description.data)
                 user = User.query.filter_by(id=session['user_id']).first()
                 user.books.append(book)
                 db.session.commit()
@@ -126,7 +140,8 @@ def get_book(book_id):
     moder, is_liked = False, False
     if 'user_id' in session:
         is_liked = bool(Like.query.filter_by(user_id=session['user_id']).first())
-        moder = Moder.query.filter_by(user_id=session['user_id']).first() or book.uploader_id == session['user_id']
+        moder = Moder.query.filter_by(user_id=session['user_id']).first() or book.uploader_id == \
+                session['user_id']
 
     return render_template('book.html', title=book.title, book=book,
                            is_liked=is_liked, moder=moder)
