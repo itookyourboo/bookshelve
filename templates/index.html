@@ -1,23 +1,33 @@
 {% extends "base.html" %}
  
 {% block content %}
+<<<<<<< HEAD
+<header style="background-color: #e3f2fd;">
+    <div class="row">
+        <form action="" method="post" enctype="multipart/form-data" novalidate>
+            {{ sort_form.hidden_tag() }}
+            {{ sort_form.sorting }}<br>
+            {{ sort_form.sort() }}
+        </form>
+        <div class="btn-group">
+            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Жанры
+            </button>
+            <div class="dropdown-menu">
+                {% for genre in genres %}
+                    <a class="dropdown-item" href="/books/genre/{{genre.id}}">{{genre.name}}</a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</header>
+    <br>
+    <h4>{{ index_title }}</h4>
+=======
     <!--{% if 'username' in session %}-->
         <!--<h2>Привет, {{session['username']}}</h2>-->
     <!--{% endif %}-->
-    <form action="" method="post" novalidate>
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.order.label }}<br>
-            {{ form.order }}<br>
-            {% for error in form.order.errors %}
-                <div class="alert alert-danger" role="alert">
-                    {{ error }}
-                </div>
-            {% endfor %}
-        </p>
-        <p>{{ form.submit() }}</p>
-
-    </form>
+>>>>>>> parent of 4a9d51a... Сортировка книг на главной странице
     {% for book in books %}
         {% if loop.index0 % columns == 0 %}
         <div class="row">
