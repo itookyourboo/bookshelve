@@ -98,13 +98,9 @@ class BanForm(FlaskForm):
 
 class InfoForm(FlaskForm):
     info_field = IntegerField('ID', validators=[DataRequired(message='Поле обязательно для заполнения')])
-<<<<<<< HEAD
     info_submit = SubmitField('OK')
 
 
 class SortForm(FlaskForm):
     sorting = SelectField('Сортировка', choices=SORT_BOOKS)
     sort = SubmitField('Сортировать')
-=======
-    info_submit = SubmitField('OK')
->>>>>>> parent of 4a9d51a... Сортировка книг на главной странице
