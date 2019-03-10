@@ -1,7 +1,6 @@
 {% extends "base.html" %}
  
 {% block content %}
-<<<<<<< HEAD
 <header style="background-color: #e3f2fd;">
     <div class="row">
         <form action="" method="post" enctype="multipart/form-data" novalidate>
@@ -23,11 +22,6 @@
 </header>
     <br>
     <h4>{{ index_title }}</h4>
-=======
-    <!--{% if 'username' in session %}-->
-        <!--<h2>Привет, {{session['username']}}</h2>-->
-    <!--{% endif %}-->
->>>>>>> parent of 4a9d51a... Сортировка книг на главной странице
     {% for book in books %}
         {% if loop.index0 % columns == 0 %}
         <div class="row">
