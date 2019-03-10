@@ -83,7 +83,7 @@ def add_book():
             img_ext = img_name.rsplit('.', 1)[1].lower()
             file_ext = file_name.rsplit('.', 1)[1].lower()
             if img_ext in ALLOWED_IMAGES_EXTENSIONS and file_ext in ALLOWED_BOOKS_EXTENSIONS:
-                book = Book(title=form.title.data, author=form.author.data, description=form.desc.data)
+                book = Book(title=form.title.data, author=form.author.data, description=form.description.data)
                 user = User.query.filter_by(id=session['user_id']).first()
                 user.books.append(book)
                 db.session.commit()
@@ -138,7 +138,7 @@ def edit_book(book_id):
         return redirect('/')
 
     book = Book.query.filter_by(id=book_id).first()
-    form = EditBookForm()
+    form = EditBookForm(title=book.title, author=book.author, description=book.description)
     # form.title.data = book.title
     # form.author.data = book.author
     # form.desc.data = book.description
@@ -184,7 +184,7 @@ def edit_book(book_id):
         if form.author.data:
             book.author = form.author.data
         if form.author.data:
-            book.description = form.desc.data
+            book.description = form.description.data
 
         db.session.add(book)
         db.session.commit()
