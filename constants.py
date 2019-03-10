@@ -1,9 +1,9 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-
 from flask_restful import Api
 import os
 
+# from api import *
 
 DATABASE_NAME = "library.db"
 TITLE = "bookshelve"
@@ -12,17 +12,6 @@ STATUSES = {
     'moder': 'Модератор',
     'admin': 'Администратор'
 }
-SORT_BOOKS = [
-    ('Book.id.desc()', 'Сначала новые'),
-    ('Book.id.asc()', 'Сначала старые'),
-    ('Book.title.asc()', 'По названию книги А-Я'),
-    ('Book.title.desc()', 'По названию книги Я-А'),
-    ('Book.author.asc()', 'По автору А-Я'),
-    ('Book.author.desc()', 'По автору Я-А'),
-    ('likes asc', 'Сначала популярные'),
-    ('likes desc', 'Сначала непопулярные')
-]
-SORT_DEFAULT = SORT_BOOKS[6]
 MAIN_ADMIN = ('mainadmin', 'admin007')
 
 ALLOWED_IMAGES_EXTENSIONS = {'gif', 'jpeg', 'jpg', 'png', 'webp'}

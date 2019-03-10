@@ -16,12 +16,7 @@ class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(80), nullable=False)
     author = db.Column(db.String(80), nullable=False)
-
-    genre_id = db.Column(db.Integer,
-                         db.ForeignKey('genre.id'),
-                         nullable=False)
-    genre = db.relationship('Genre', backref=db.backref('books', lazy=True))
-
+    # genre = db.relationship('Genre', backref=db.backref('books', lazy=True))
     description = db.Column(db.String(1000), nullable=False)
 
     uploader_id = db.Column(db.Integer,
@@ -32,6 +27,9 @@ class Book(db.Model):
     file = db.Column(db.String(200))
 
     likes = 0
+
+    def __repr__(self):
+        return f'{self.name}, {self.author.name}'
 
 
 # Модель автора

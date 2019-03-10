@@ -1,4 +1,4 @@
-from constants import db, STATUSES, SORT_DEFAULT
+from constants import db, STATUSES
 from dbhelper import *
 import shutil
 from werkzeug.security import generate_password_hash, \
@@ -147,10 +147,6 @@ def delete_genre(name):
     db.session.commit()
 
 
-def get_genres():
-    return Genre.query.order_by(Genre.name.asc()).all()
-
-
 # Редактирование автора
 def edit_author(id, **keys):
     author = Author.query.filter_by(id=id).first()
@@ -208,31 +204,3 @@ def delete_book(book_id):
 def delete_all_books():
     db.session.query(Book).delete()
     db.session.commit()
-
-
-def delete_all_genres():
-    db.session.query(Genre).delete()
-    db.session.commit()
-
-
-def get_sorted_books(sort, genre_id=None):
-    if sort is None or sort == 'None':
-        sort = SORT_DEFAULT[0]
-
-    if 'likes' in sort:
-        books = (Book.query.filter_by(genre_id=genre_id).all() if genre_id else Book.query.all())
-        for book in books:
-            if not book.image:
-                book.image = 'static/placeholder_book.jpg'
-            book.likes = get_likes(book.id)
-        books = sorted(books, key=lambda x: (-1 if 'asc' in sort else 1) * x.likes)
-        return books
-
-    books = (Book.query.filter_by(genre_id=genre_id).order_by(eval(sort)).all()
-             if genre_id else Book.query.order_by(eval(sort)).all())
-
-    for book in books:
-        if not book.image:
-            book.image = 'static/placeholder_book.jpg'
-        book.likes = get_likes(book.id)
-    return books

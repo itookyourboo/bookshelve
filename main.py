@@ -9,8 +9,8 @@ from forms import *
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import os
-from functions import transliterate, like, get_sorted_books
-
+from functions import transliterate, like
+from sqlalchemy import desc, asc
 
 if not len(User.query.all()):
     admin = User(username=MAIN_ADMIN[0],
@@ -20,38 +20,29 @@ if not len(User.query.all()):
     print(functions.change_status(admin.id, STATUSES['admin']))
 
 
-# functions.delete_all_genres()
-# functions.add_genre('Художественная литература')
-# functions.add_genre('Книги для детей')
-# functions.add_genre('Образование')
-# functions.add_genre('Наука и техника')
-# functions.add_genre('Общество')
-# functions.add_genre('Деловая литература')
-# functions.add_genre('Красота. Здоровье. Спорт')
-# functions.add_genre('Увлечения')
-# functions.add_genre('Психология')
-# functions.add_genre('Эзотерика')
-# functions.add_genre('Философия и религия')
-# functions.add_genre('Искусство')
-# functions.add_genre('Подарочные издания')
-# functions.add_genre('Книги на иностранных языках')
-
-
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/books', methods=['GET', 'POST'])
 def index():
-    form = SortForm(sorting=SORT_DEFAULT[0])
-    books = get_sorted_books(form.sorting.data)
-
+    form = SortForm()
+    form.set_default_choices([('id ↑', 'дате ↑'),
+                              ('id ↓', 'дате ↓'),
+                              ('title ↑', 'По названию ↑'),
+                              ('title ↓', 'По названию ↓'),
+                              ('author ↑', 'По автору ↑'),
+                              ('author ↓', 'По автору ↓'),
+                              ('likes ↑', 'По лайкам ↑'),
+                              ('likes ↓', 'По лайкам ↓')])
     if form.validate_on_submit():
-        books = get_sorted_books(form.sorting.data)
-        return render_template('index.html', title=TITLE, session=session,
-                               books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                               genres=get_genres(), index_title='Все книги')
-
+        form.update_default(form.order.data)
+    order = form.get_default()
+    func = desc if order[-1] == '↑' else asc
+    books = Book.query.order_by(func(order[:-2]))
+    for book in books:
+        if not book.image:
+            book.image = 'static/placeholder_book.jpg'
+        book.likes = functions.get_likes(book.id)
     return render_template('index.html', title=TITLE, session=session,
-                           books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                           genres=get_genres(), index_title='Все книги')
+                           books=books, columns=app.config['BOOKS_COLUMNS'], form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -106,11 +97,9 @@ def add_book():
             file_ext = file_name.rsplit('.', 1)[1].lower()
             if img_ext in ALLOWED_IMAGES_EXTENSIONS and file_ext in ALLOWED_BOOKS_EXTENSIONS:
                 book = Book(title=form.title.data, author=form.author.data,
-                            genre_id=form.genre.data, description=form.description.data)
+                            description=form.description.data)
                 user = User.query.filter_by(id=session['user_id']).first()
                 user.books.append(book)
-                genre = Genre.query.filter_by(id=form.genre.data).first()
-                genre.books.append(book)
                 db.session.commit()
 
                 book = Book.query.filter_by(title=form.title.data).first()
@@ -151,7 +140,8 @@ def get_book(book_id):
     moder, is_liked = False, False
     if 'user_id' in session:
         is_liked = bool(Like.query.filter_by(user_id=session['user_id']).first())
-        moder = Moder.query.filter_by(user_id=session['user_id']).first() or book.uploader_id == session['user_id']
+        moder = Moder.query.filter_by(user_id=session['user_id']).first() or book.uploader_id == \
+                session['user_id']
 
     return render_template('book.html', title=book.title, book=book,
                            is_liked=is_liked, moder=moder)
@@ -163,7 +153,10 @@ def edit_book(book_id):
         return redirect('/')
 
     book = Book.query.filter_by(id=book_id).first()
-    form = EditBookForm(title=book.title, author=book.author, description=book.description, genre=book.genre_id)
+    form = EditBookForm(title=book.title, author=book.author, description=book.description)
+    # form.title.data = book.title
+    # form.author.data = book.author
+    # form.desc.data = book.description
 
     if form.validate_on_submit():
         if form.image.data:
@@ -207,10 +200,6 @@ def edit_book(book_id):
             book.author = form.author.data
         if form.author.data:
             book.description = form.description.data
-        if form.genre.data:
-            genre = Genre.query.filter_by(id=form.genre.data).first()
-            genre.books.append(book)
-            book.genre_id = genre.id
 
         db.session.add(book)
         db.session.commit()
@@ -226,23 +215,6 @@ def delete_book(book_id):
         functions.delete_book(book_id)
 
     return redirect('/')
-
-
-@app.route('/books/genre/<int:genre_id>', methods=['GET', 'POST'])
-def books_genre(genre_id):
-    genre_name = Genre.query.filter_by(id=genre_id).first().name
-    form = SortForm(sorting=SORT_DEFAULT[0])
-    books = get_sorted_books(form.sorting.data, genre_id=genre_id)
-
-    if form.validate_on_submit():
-        books = get_sorted_books(form.sorting.data, genre_id=genre_id)
-        return render_template('index.html', title=TITLE, session=session,
-                               books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                               genres=get_genres(), index_title=genre_name)
-
-    return render_template('index.html', title=TITLE, session=session,
-                           books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                           genres=get_genres(), index_title=genre_name)
 
 
 @app.route('/admin', methods=['GET', 'POST'])
