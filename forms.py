@@ -34,6 +34,10 @@ class AddBookForm(FlaskForm):
         DataRequired(message='Поле обязательно для заполнения'),
         Length(max=80, message='Название должно быть не длинее 80 символов')])
 
+    author = StringField('Автор', validators=[
+        DataRequired(message='Поле обязательно для заполнения'),
+        Length(max=80, message='Имя автора должно быть не длиннее 80 символов')])
+
     desc = TextAreaField('Описание книги', validators=[
         DataRequired(message='Поле обязательно для заполнения'),
         Length(max=1000, message='Описание должно быть не длинее 1000 символов')])

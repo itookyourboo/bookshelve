@@ -12,6 +12,14 @@ import os
 from functions import transliterate, like
 
 
+if not len(User.query.all()):
+    admin = User(username=MAIN_ADMIN[0],
+                 password_hash=generate_password_hash(MAIN_ADMIN[1]))
+    db.session.add(admin)
+    db.session.commit()
+    print(functions.change_status(admin.id, STATUSES['admin']))
+
+
 @app.route('/')
 @app.route('/books')
 def index():
@@ -33,7 +41,7 @@ def login():
             session.clear()
             session['username'] = user.username
             session['user_id'] = user.id
-            return redirect('/index')
+            return redirect('/')
         form.submit.errors.append('Неправильный логин или пароль')
     return render_template('login.html', title='Вход', form=form)
 
@@ -44,8 +52,7 @@ def register():
     if form.validate_on_submit():
         if User.query.filter_by(username=form.username.data).first() is None:
             user = User(username=form.username.data,
-                        password_hash=generate_password_hash(form.password.data),
-                        status=STATUSES['user'])
+                        password_hash=generate_password_hash(form.password.data))
             db.session.add(user)
             db.session.commit()
 
@@ -53,7 +60,7 @@ def register():
             session.clear()
             session['username'] = user.username
             session['user_id'] = user.id
-            return redirect('/index')
+            return redirect('/')
         form.submit.errors.append('Пользователь с таким логином уже существует')
     return render_template('register.html', title='Регистрация', form=form)
 
@@ -76,7 +83,7 @@ def add_book():
             img_ext = img_name.rsplit('.', 1)[1].lower()
             file_ext = file_name.rsplit('.', 1)[1].lower()
             if img_ext in ALLOWED_IMAGES_EXTENSIONS and file_ext in ALLOWED_BOOKS_EXTENSIONS:
-                book = Book(title=form.title.data, description=form.desc.data)
+                book = Book(title=form.title.data, author=form.author.data, description=form.desc.data)
                 user = User.query.filter_by(id=session['user_id']).first()
                 user.books.append(book)
                 db.session.commit()
@@ -95,7 +102,7 @@ def add_book():
                 with open(book.file, 'wb') as f:
                     f.write(request.files[form.image.name].read())
                 db.session.commit()
-                return redirect('/index')
+                return redirect('/')
 
             form.submit.errors.append('Запрещенный формат файла')
         form.submit.errors.append('Имена файлов должны содержать расширение.')
@@ -123,6 +130,9 @@ def get_book(book_id):
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
+    if not functions.is_admin(session):
+        return redirect('/')
+
     status_form = StatusForm()
     ban_form = BanForm()
     info_form = InfoForm()
@@ -132,8 +142,7 @@ def admin():
         user = User.query.filter_by(id=id).first()
         status_message = 'Пользователь не существует'
         if user:
-            functions.change_status(id, status_form.status_select.data)
-            status_message = 'Статус успешно изменён'
+            status_message = functions.change_status(id, status_form.status_select.data)
         return render_template('admin.html', title='ADMIN',
                                status_form=status_form, ban_form=ban_form, info_form=info_form,
                                status_message=status_message)
@@ -143,8 +152,7 @@ def admin():
         user = User.query.filter_by(id=id).first()
         ban_message = 'Пользователь не существует'
         if user:
-            functions.ban_user(id)
-            ban_message = 'Пользователь забанен/удалён'
+            ban_message = functions.ban_user(id)
 
         return render_template('admin.html', title='ADMIN',
                                status_form=status_form, ban_form=ban_form, info_form=info_form,
@@ -155,12 +163,7 @@ def admin():
         user = User.query.filter_by(id=id).first()
         info_message = 'Пользователь не существует'
         if user:
-            status = user.status
-            books = Book.query.filter_by(uploader_id=id).count()
-            likes = Like.query.filter_by(user_id=id).count()
-            username, books_count = user.username, books
-
-            info_message = f"ID{id}: {username} ({status}).<br>Загрузил книг: {books_count}<br>Поставил лайков: {likes}"
+            info_message = functions.get_info(id)
 
         return render_template('admin.html', title='ADMIN',
                                status_form=status_form, ban_form=ban_form, info_form=info_form,
@@ -168,6 +171,29 @@ def admin():
 
     return render_template('admin.html', title='ADMIN',
                            status_form=status_form, ban_form=ban_form, info_form=info_form)
+
+
+@app.route('/admin/users')
+def admin_user():
+    if not functions.is_admin(session):
+        return redirect('/')
+
+    info_list = [functions.get_info(user.id) for user in User.query.all()]
+    return render_template('admin_users.html', title="ADMIN USERS",
+                           info_list=info_list)
+
+
+@app.route('/users/<int:user_id>')
+def user(user_id):
+    user = User.query.filter_by(id=user_id).first()
+    books = Book.query.filter_by(uploader_id=user_id).order_by(Book.id.desc()).all()
+    for book in books:
+        if not book.image:
+            book.image = 'static/placeholder_book.jpg'
+        book.likes = functions.get_likes(book.id)
+
+    return render_template('user_info.html', title=user.username, info=functions.get_info(user_id),
+                           books=books, columns=app.config['BOOKS_COLUMNS'])
 
 
 if __name__ == '__main__':

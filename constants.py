@@ -12,6 +12,7 @@ STATUSES = {
     'moder': 'Модератор',
     'admin': 'Администратор'
 }
+MAIN_ADMIN = ('mainadmin', 'admin007')
 
 ALLOWED_IMAGES_EXTENSIONS = {'gif', 'jpeg', 'jpg', 'png', 'webp'}
 ALLOWED_BOOKS_EXTENSIONS = {'fb2', 'epub', 'mobi', 'pdf', 'kf8', 'djvu' 'rtf', 'txt'}

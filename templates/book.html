@@ -2,7 +2,7 @@
 
 {% block content %}
     <br>
-    <h1 style="color: #000000" align="center">{{ book.title }}</h1>
+    <h1 style="color: #000000" align="center">{{ book.author }} - {{ book.title }}</h1>
     <div class="container">
         <div class="row">
             <div class="col-9">
@@ -12,22 +12,29 @@
                 </div>
             </div>
             <div class="col">
-                <img class="book-img rounded" width="200" height="300" src="\{{ book.image }}"
-                     alt="{{ book.title }}">
+                {% if book.image %}
+                    <img class="book-img rounded" width="200" height="300" src="\{{ book.image }}"
+                         alt="{{ book.title }}">
+                {% else %}
+                    <img class="book-img rounded" width="200" height="300" src="/static/placeholder_book.jpg"
+                         alt="{{ book.title }}">
+                {% endif %}
             </div>
         </div>
         <div class="row">
             <div class="col-9" align="center">
-                <form action="" method="post" novalidate>
-                    <br>
-                    <button type="submit" class="btn btn-primary" name="download">
-                        {% if 'user_id' in session %}
+                {% if book.file %}
+                    <form action="" method="post" novalidate>
+                        <br>
+                        <button type="submit" class="btn btn-primary" name="download">
+                            {% if 'user_id' in session %}
                             Скачать
-                        {% else %}
+                            {% else %}
                             Войдите, чтобы скачать файл
-                        {% endif %}
-                    </button>
-                </form>
+                            {% endif %}
+                        </button>
+                    </form>
+                {% endif %}
             </div>
             <div class="col">
                 <form action="" method="post" novalidate>
@@ -42,6 +49,9 @@
                     </button>
                 </form>
             </div>
+        </div>
+        <div style="margin-top: 20px">
+            <h4>Загрузил <a href="/users/{{book.uploader_id}}">{{ book.uploader.username }}</a></h4>
         </div>
     </div>
 

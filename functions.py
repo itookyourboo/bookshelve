@@ -5,11 +5,100 @@ from werkzeug.security import generate_password_hash, \
     check_password_hash
 
 
+# Проверка на админа
+def is_admin(session):
+    return 'user_id' in session and Admin.query.filter_by(user_id=session['user_id']).first()
+
+
 # Изменить статус пользователя (пользователь, модератор, администратор)
 def change_status(user_id, status):
+    moder = Moder.query.filter_by(user_id=user_id).first()
+    admin = Admin.query.filter_by(user_id=user_id).first()
+
+    if admin:
+        if admin.id != 1:
+            return 'Вы не можете изменить должность главного администратора'
+
+        if status == STATUSES['moder']:
+            db.session.delete(admin)
+            db.session.commit()
+        elif status == STATUSES['user']:
+            db.session.delete(admin)
+            db.session.delete(moder)
+            db.session.commit()
+        return 'Статус изменён'
+
+    if moder:
+        if status == STATUSES['user']:
+            db.session.delete(moder)
+            db.session.commit()
+        elif status == STATUSES['admin']:
+            db.session.add(Admin(user_id=user_id))
+            db.session.commit()
+        return 'Статус изменён'
+
+    if not admin and not moder:
+        if status == STATUSES['moder']:
+            db.session.add(Moder(user_id=user_id))
+            db.session.commit()
+        elif status == STATUSES['admin']:
+            db.session.add(Moder(user_id=user_id))
+            db.session.add(Admin(user_id=user_id))
+            db.session.commit()
+        return 'Статус изменён'
+
+    return 'непонел'
+
+
+# Статус пользователя
+def get_status(user_id):
+    moder = Moder.query.filter_by(user_id=user_id).first()
+    admin = Admin.query.filter_by(user_id=user_id).first()
+    if admin:
+        return STATUSES['admin']
+    if moder:
+        return STATUSES['moder']
+    return STATUSES['user']
+
+
+# Информация о пользователе
+def get_info(user_id):
     user = User.query.filter_by(id=user_id).first()
-    user.status = status
+    moder = Moder.query.filter_by(user_id=user_id).first()
+    admin = Admin.query.filter_by(user_id=user_id).first()
+    status = get_status(user_id)
+    if admin:
+        status += f"_{admin.id}"
+
+    books = Book.query.filter_by(uploader_id=user_id).count()
+    likes = Like.query.filter_by(user_id=user_id).count()
+    username, books_count = user.username, books
+
+    return f"ID{user_id}: {username} ({status}).<br>Загрузил книг: {books_count}<br>Поставил лайков: {likes}"
+
+
+# Бан пользователя, его книг и лайков
+def ban_user(user_id):
+    if user_id == 1:
+        return 'Вы не можете забанить главного администратора'
+
+    moder = Moder.query.filter_by(user_id=user_id).first()
+    admin = Moder.query.filter_by(user_id=user_id).first()
+    user = User.query.filter_by(id=user_id).first()
+    books = Book.query.filter_by(uploader_id=user_id).all()
+    db.session.delete(user)
+    if moder:
+        db.session.delete(moder)
+    if admin:
+        db.session.delete(admin)
+
+    for book in books:
+        db.session.delete(Like.query.filter_by(user_id=user_id, book_id=book.id).first())
+        db.session.delete(book)
+        shutil.rmtree(f'static/books/{book.id}', ignore_errors=True)
     db.session.commit()
+
+    return 'Пользователь успешно забанен'
 
 
 # Поставить лайк / убрать лайк
@@ -25,6 +114,14 @@ def like(user_id, book_id):
 # Количество лайков у книги
 def get_likes(book_id):
     return Like.query.filter_by(book_id=book_id).count()
+
+
+# Удаление книги и лайков на ней
+def delete_book(book_id):
+    book = Book.query.filter_by(id=book_id).first()
+    db.session.query(Like).filter(Like.book_id==book.id).delete()
+    db.session.delete(book)
+    shutil.rmtree(f'static/books/{book.id}', ignore_errors=True)
 
 
 # Добавление жанра
@@ -63,17 +160,6 @@ def edit_book(id, **keys):
     db.session.commit()
 
 
-# Бан пользователя и его книг
-def ban_user(user_id):
-    user = User.query.filter_by(id=user_id).first()
-    books = Book.query.filter_by(uploader_id=user_id).all()
-    db.session.delete(user)
-    for book in books:
-        db.session.delete(book)
-        shutil.rmtree(f'static/books/{book.id}', ignore_errors=True)
-    db.session.commit()
-
-
 def transliterate(string):
     capital_letters = {'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'E',
                        'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N',
@@ -100,3 +186,8 @@ def transliterate(string):
     for cyrillic_string, latin_string in capital_letters_transliterated_to_multiple_letters.items():
         string = string.replace(cyrillic_string, latin_string.upper())
     return string
+
+
+def delete_all_books():
+    db.session.query(Book).delete()
+    db.session.commit()

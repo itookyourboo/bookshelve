@@ -6,17 +6,16 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(160), nullable=False)
-    status = db.Column(db.String(80))
 
     def __repr__(self):
-        return f'User ID{self.id}. {self.username}: {self.status}'
+        return f'User ID{self.id}. {self.username}'
 
 
 # Модель книги
 class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(80), nullable=False)
-    # author = db.relationship('Author', backref=db.backref('books', lazy=True))
+    author = db.Column(db.String(80), nullable=False)
     # genre = db.relationship('Genre', backref=db.backref('books', lazy=True))
     description = db.Column(db.String(1000), nullable=False)
 
@@ -39,6 +38,18 @@ class Author(db.Model):
     name = db.Column(db.String(80), nullable=False)
     image = db.Column(db.String(80))
     description = db.Column(db.String(1000))
+
+
+# Модель модератора
+class Moder(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+
+# Модель админа
+class Admin(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 
 # Модель жанра
