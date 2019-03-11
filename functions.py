@@ -16,10 +16,22 @@ def is_moder(session):
     return 'user_id' in session and Moder.query.filter_by(user_id=session['user_id']).first()
 
 
-def can_edit(session, book_id):
-    if not 'user_id' in session:
+def can_edit_book(session, book_id):
+    if 'user_id' not in session:
         return False
     return is_moder(session) or Book.query.filter_by(id=book_id, uploader_id=session['user_id']).first()
+
+
+def can_delete_comment(session, comment_id):
+    if 'user_id' not in session:
+        return False
+    return is_moder(session) or Comment.query.filter_by(id=comment_id, user_id=session['user_id']).first()
+
+
+def can_edit_comment(session, comment_id):
+    if 'user_id' not in session:
+        return False
+    return Comment.query.filter_by(id=comment_id, user_id=session['user_id']).first()
 
 
 # Изменить статус пользователя (пользователь, модератор, администратор)
@@ -85,10 +97,11 @@ def get_info(user_id):
     books = Book.query.filter_by(uploader_id=user_id).count()
     likes = Like.query.filter_by(user_id=user_id).count()
     liked = get_user_likes(user_id)
+    comments = get_user_comments(user_id)
     username, books_count = user.username, books
 
     return f"ID{user_id}: {username} ({status}).<br>Загрузил книг: {books_count}<br>" \
-           f"Получил лайков: {liked}<br>Поставил лайков: {likes}"
+           f"Получил лайков: {liked}<br>Поставил лайков: {likes}<br>Оставил комментариев: {comments}"
 
 
 # Бан пользователя, его книг и лайков
@@ -132,6 +145,10 @@ def like(user_id, book_id):
 # Количество лайков у книги
 def get_likes(book_id):
     return Like.query.filter_by(book_id=book_id).count()
+
+
+def get_comments(book_id):
+    return Comment.query.filter_by(book_id=book_id).count()
 
 
 # Изменение названия жанра
@@ -226,7 +243,18 @@ def get_sorted_books(sort, genre_id=None):
             if not book.image:
                 book.image = 'static/placeholder_book.jpg'
             book.likes = get_likes(book.id)
+            book.comments = get_comments(book.id)
         books = sorted(books, key=lambda x: (-1 if 'asc' in sort else 1) * x.likes)
+        return books
+
+    if 'comments' in sort:
+        books = (Book.query.filter_by(genre_id=genre_id).all() if genre_id else Book.query.all())
+        for book in books:
+            if not book.image:
+                book.image = 'static/placeholder_book.jpg'
+            book.likes = get_likes(book.id)
+            book.comments = get_comments(book.id)
+        books = sorted(books, key=lambda x: (-1 if 'asc' in sort else 1) * x.comments)
         return books
 
     books = (Book.query.filter_by(genre_id=genre_id).order_by(eval(sort)).all()
@@ -236,6 +264,7 @@ def get_sorted_books(sort, genre_id=None):
         if not book.image:
             book.image = 'static/placeholder_book.jpg'
         book.likes = get_likes(book.id)
+        book.comments = get_comments(book.id)
     return books
 
 
@@ -259,6 +288,16 @@ def get_liked_top():
     } for like in likes], key=lambda x: -x['count'])
 
 
+def get_commented_top():
+    comments = Comment.query.with_entities(Comment.user_id, func.count(Comment.user_id)) \
+        .group_by(Comment.user_id).all()
+    return sorted([{
+        'user_id': comment[0],
+        'username': User.query.filter_by(id=comment[0]).first().username,
+        'count': comment[1]
+    } for comment in comments], key=lambda x: -x['count'])
+
+
 def get_likes_top():
     result = {}
     books = Book.query.all()
@@ -274,8 +313,15 @@ def get_likes_top():
 
 
 def get_user_likes(user_id):
-    return reduce(lambda a, x: a + x,
-                  [get_likes(book.id) for book in Book.query.filter_by(uploader_id=user_id).all()])
+    books = Book.query.filter_by(uploader_id=user_id).all()
+    result = 0
+    for book in books:
+        result += get_likes(book.id)
+    return result
+
+
+def get_user_comments(user_id):
+    return Comment.query.filter_by(user_id=user_id).count()
 
 
 def get_searched_books(search, genre_id=None):

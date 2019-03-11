@@ -107,3 +107,10 @@ class SortForm(FlaskForm):
 class SearchForm(FlaskForm):
     field = StringField('Поиск')
     search = SubmitField('Найти')
+
+
+class CommentForm(FlaskForm):
+    field = TextAreaField('Оставить комментарий', validators=[
+        Length(min=20, message='Комментарий должен быть не короче 20 символов')
+    ])
+    submit = SubmitField('ОК')

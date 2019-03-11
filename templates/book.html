@@ -60,13 +60,51 @@
             <a href="/books/delete/{{book.id}}">Удалить</a>
         </div>
         {% endif %}
+
+        <br>
+        {% if 'user_id' in session %}
+            <form action="" method="post" novalidate>
+                {{ comment_form.hidden_tag() }}
+                {{ comment_form.field.label }}<br>
+                {{ comment_form.field(cols="60", rows="4") }}<br>
+                {{ comment_form.submit() }}
+                {% for error in comment_form.field.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </form>
+        {% else %}
+            <h5>Войдите, чтобы оставить комментарий</h5>
+        {% endif %}
+
+        <div style="margin-top: 20px">
+            {% for comment in comments %}
+                <div class="col-9">
+                    <div class="alert alert-dark" role="alert"
+                         style="height:100%; word-wrap: normal; overflow: auto">
+                        <h5><a href="/users/{{comment.user_id}}">{{ comment.user.username }}</a></h5>
+                        <h5>
+                            {% autoescape false %}
+                                {{ comment.text }}
+                            {% endautoescape %}
+                        </h5>
+                        {% if comment.can_delete %}
+                            <div align="right">
+                                <form action="" method="post" novalidate>
+                                    <button style="margin-left: 10px" type="submit" class="btn btn-primary" name="delete_comment" value="{{comment.id}}">Удалить</button>
+                                </form>
+                                <!--{% if comment.can_edit %}-->
+                                    <!--<form action="" method="post" novalidate>-->
+                                        <!--<button style="margin-left: 10px" type="submit" class="btn btn-primary" name="edit_comment">Редактировать</button>-->
+                                    <!--</form>-->
+                                <!--{% endif %}-->
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     </div>
 
 {% endblock %}
-
-<form action="" method="post" novalidate>
-    {{ info_form.hidden_tag() }}
-    {{ info_form.info_field.label }}
-    {{ info_form.info_field }}
-    {{ info_form.info_submit() }}
-</form>

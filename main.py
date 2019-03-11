@@ -32,7 +32,6 @@ def index():
 
         if search_form.search.data:
             books = get_searched_books(search_form.field.data)
-            print(books)
             return render_template('index.html', title=TITLE, session=session,
                                    books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
                                    genres=get_genres(), index_title='Все книги', search_form=search_form)
@@ -127,6 +126,9 @@ def add_book():
 @app.route('/books/<int:book_id>', methods=['GET', 'POST'])
 def get_book(book_id):
     book = Book.query.filter_by(id=book_id).first()
+    if not book:
+        return 'Не найдено книги с таким ID'
+    comment_form = CommentForm()
 
     if request.method == 'POST':
         if 'user_id' in session:
@@ -134,6 +136,24 @@ def get_book(book_id):
                 return send_file(book.file, as_attachment=True)
             elif 'like' in request.form:
                 like(session['user_id'], book_id)
+            # elif 'edit_comment' in request.form:
+            #     comment_id = int(request.form['edit_comment'])
+            #     comment = Comment.query.filter_by(id=comment_id).first()
+            #     comment_form
+            elif 'delete_comment' in request.form:
+                comment_id = int(request.form['delete_comment'])
+                comment = Comment.query.filter_by(id=comment_id).first()
+                book_id = comment.book_id
+                db.session.delete(comment)
+                db.session.commit()
+            elif comment_form.submit.data and comment_form.validate_on_submit():
+                comment = Comment(
+                    user_id=session['user_id'],
+                    book_id=book_id,
+                    text=comment_form.field.data.replace('\n', '<br>'))
+                user = User.query.filter_by(id=session['user_id']).first()
+                user.comments.append(comment)
+                db.session.commit()
         else:
             return redirect('/login')
 
@@ -141,14 +161,19 @@ def get_book(book_id):
     if 'user_id' in session:
         is_liked = bool(Like.query.filter_by(book_id=book_id, user_id=session['user_id']).first())
         moder = Moder.query.filter_by(user_id=session['user_id']).first() or book.uploader_id == session['user_id']
+    comments = Comment.query.order_by(Comment.id.desc()).filter_by(book_id=book_id).all()
+    for comment in comments:
+        comment.can_delete = functions.can_delete_comment(session, comment.id)
+        comment.can_edit = functions.can_edit_comment(session, comment.id)
 
     return render_template('book.html', title=book.title, book=book,
-                           is_liked=is_liked, moder=moder)
+                           is_liked=is_liked, moder=moder, comments=comments,
+                           comment_form=comment_form)
 
 
 @app.route('/books/edit/<int:book_id>', methods=['GET', 'POST'])
 def edit_book(book_id):
-    if not functions.can_edit(session, book_id):
+    if not functions.can_edit_book(session, book_id):
         return redirect('/')
 
     book = Book.query.filter_by(id=book_id).first()
@@ -212,7 +237,7 @@ def edit_book(book_id):
 
 @app.route('/books/delete/<int:book_id>')
 def delete_book(book_id):
-    if functions.can_edit(session, book_id):
+    if functions.can_edit_book(session, book_id):
         functions.delete_book(book_id)
 
     return redirect('/')
@@ -300,6 +325,8 @@ def admin_user():
 @app.route('/users/<int:user_id>')
 def user(user_id):
     user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return 'Не найдено пользователя с таким ID'
     books = Book.query.filter_by(uploader_id=user_id).order_by(Book.id.desc()).all()
     for book in books:
         if not book.image:
@@ -315,6 +342,7 @@ def top():
     return render_template('top.html', title='Топ пользователей',
                            upload_list=functions.get_upload_top(),
                            liked_list=functions.get_liked_top(),
+                           commented_list=functions.get_commented_top(),
                            likes_list=functions.get_likes_top())
 
 

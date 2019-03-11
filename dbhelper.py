@@ -32,6 +32,7 @@ class Book(db.Model):
     file = db.Column(db.String(200))
 
     likes = 0
+    comments = 0
 
 
 # Модель автора
@@ -65,6 +66,18 @@ class Like(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=False)
+
+
+# Комментарий
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('comments', lazy=True))
+    book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=False)
+    text = db.Column(db.String(1000))
+
+    can_delete = False
+    can_edit = False
 
 
 db.create_all()

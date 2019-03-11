@@ -33,6 +33,21 @@
     </table>
     </div>
     <div style="margin: 20px" align="center">
+            <h4>По оставленным комментариям</h4>
+            <table border="1px" cellpadding="10px">
+            <th>№</th>
+            <th>Пользователь</th>
+            <th>Оставил комментариев</th>
+            {% for info in commented_list %}
+                <tr>
+                    <td>{{loop.index0+1}}</td>
+                    <td><a href="/users/{{info['user_id']}}">{{info['username']}}</a></td>
+                    <td>{{info['count']}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        </div>
+    <div style="margin: 20px" align="center">
             <h4>По полученным лайкам</h4>
             <table border="1px" cellpadding="10px">
             <th>№</th>

@@ -38,7 +38,7 @@
                 <img class="book-img rounded" width="200" height="300" src="\{{ book.image }}" alt="{{ book.title }}">
             <br>
                 <h4 style="color: #000000">{{ book.title }}<br>{{ book.author }}</h4>
-                <h5 style="color: #000000">{{ book.likes }} &#9829;</h5>
+                <h5 style="color: #000000">&#9829; {{ book.likes }} &#128489; {{ book.comments }}</h5>
             </div></a>
         {% if loop.index0 % columns == columns - 1 %}
         </div><!-- /row -->

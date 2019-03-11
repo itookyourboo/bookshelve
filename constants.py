@@ -19,8 +19,10 @@ SORT_BOOKS = [
     ('Book.title.desc()', 'По названию книги Я-А'),
     ('Book.author.asc()', 'По автору А-Я'),
     ('Book.author.desc()', 'По автору Я-А'),
-    ('likes asc', 'Сначала популярные'),
-    ('likes desc', 'Сначала непопулярные')
+    ('likes asc', 'По лайкам 9-1'),
+    ('likes desc', 'По лайкам 1-9'),
+    ('comments asc', 'По комментариям 9-1'),
+    ('comments desc', 'По комментариям 1-9')
 ]
 SORT_DEFAULT = SORT_BOOKS[6]
 MAIN_ADMIN = ('mainadmin', 'admin007')
