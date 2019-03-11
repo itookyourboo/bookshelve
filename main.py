@@ -12,7 +12,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import os
 from functions import transliterate, like, get_sorted_books, get_searched_books
 
-
 add_all()
 
 
@@ -28,13 +27,15 @@ def index():
             books = get_sorted_books(form.sorting.data)
             return render_template('index.html', title=TITLE, session=session,
                                    books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                                   genres=get_genres(), index_title='Все книги', search_form=search_form)
+                                   genres=get_genres(), index_title='Все книги',
+                                   search_form=search_form)
 
         if search_form.search.data:
             books = get_searched_books(search_form.field.data)
             return render_template('index.html', title=TITLE, session=session,
                                    books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                                   genres=get_genres(), index_title='Все книги', search_form=search_form)
+                                   genres=get_genres(), index_title='Все книги',
+                                   search_form=search_form)
 
     return render_template('index.html', title=TITLE, session=session,
                            books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
@@ -136,10 +137,13 @@ def get_book(book_id):
                 return send_file(book.file, as_attachment=True)
             elif 'like' in request.form:
                 like(session['user_id'], book_id)
-            # elif 'edit_comment' in request.form:
-            #     comment_id = int(request.form['edit_comment'])
-            #     comment = Comment.query.filter_by(id=comment_id).first()
-            #     comment_form
+            elif 'edit_comment' in request.form:
+                session['comment_id'] = int(request.form['edit_comment'])
+                comment = Comment.query.filter_by(id=session['comment_id']).first()
+
+                comment_form.field.default = comment.text
+                comment_form.submit.render_kw = {"value": "Редактировать"}
+                comment_form.process()
             elif 'delete_comment' in request.form:
                 comment_id = int(request.form['delete_comment'])
                 comment = Comment.query.filter_by(id=comment_id).first()
@@ -147,20 +151,34 @@ def get_book(book_id):
                 db.session.delete(comment)
                 db.session.commit()
             elif comment_form.submit.data and comment_form.validate_on_submit():
-                comment = Comment(
-                    user_id=session['user_id'],
-                    book_id=book_id,
-                    text=comment_form.field.data.replace('\n', '<br>'))
-                user = User.query.filter_by(id=session['user_id']).first()
-                user.comments.append(comment)
-                db.session.commit()
+                if 'comment_id' in session:
+                    comment = Comment.query.filter_by(id=session.pop('comment_id')).first()
+                    text = comment_form.field.data.replace('\n', '<br>')
+                    if comment.book_id == book_id and comment.text != text:
+                        comment.edited = True
+                        comment.text = text
+                        db.session.commit()
+
+                    comment_form.field.default = ''
+                    comment_form.submit.render_kw = {"value": "ОК"}
+                    comment_form.process()
+
+                else:
+                    comment = Comment(
+                        user_id=session['user_id'],
+                        book_id=book_id,
+                        text=comment_form.field.data.replace('\n', '<br>'))
+                    user = User.query.filter_by(id=session['user_id']).first()
+                    user.comments.append(comment)
+                    db.session.commit()
         else:
             return redirect('/login')
 
     moder, is_liked = False, False
     if 'user_id' in session:
         is_liked = bool(Like.query.filter_by(book_id=book_id, user_id=session['user_id']).first())
-        moder = Moder.query.filter_by(user_id=session['user_id']).first() or book.uploader_id == session['user_id']
+        moder = Moder.query.filter_by(user_id=session['user_id']).first() or book.uploader_id == \
+                session['user_id']
     comments = Comment.query.order_by(Comment.id.desc()).filter_by(book_id=book_id).all()
     for comment in comments:
         comment.can_delete = functions.can_delete_comment(session, comment.id)
@@ -177,7 +195,8 @@ def edit_book(book_id):
         return redirect('/')
 
     book = Book.query.filter_by(id=book_id).first()
-    form = EditBookForm(title=book.title, author=book.author, description=book.description, genre=book.genre_id)
+    form = EditBookForm(title=book.title, author=book.author, description=book.description,
+                        genre=book.genre_id)
     form.genre.choices = [(genre.id, genre.name) for genre in get_genres()]
 
     if form.validate_on_submit():
@@ -255,12 +274,14 @@ def books_genre(genre_id):
             books = get_sorted_books(form.sorting.data, genre_id=genre_id)
             return render_template('index.html', title=TITLE, session=session,
                                    books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                                   genres=get_genres(), index_title=genre_name, search_form=search_form)
+                                   genres=get_genres(), index_title=genre_name,
+                                   search_form=search_form)
         if search_form.search.data:
             books = get_searched_books(search_form.field.data, genre_id=genre_id)
             return render_template('index.html', title=TITLE, session=session,
                                    books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                                   genres=get_genres(), index_title=genre_name, search_form=search_form)
+                                   genres=get_genres(), index_title=genre_name,
+                                   search_form=search_form)
 
     return render_template('index.html', title=TITLE, session=session,
                            books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,

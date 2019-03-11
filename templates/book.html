@@ -1,110 +1,137 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <br>
-    <h1 style="color: #000000" align="center">{{ book.author }} - {{ book.title }}</h1>
-    <h5 align="center"><a href="/books/genre/{{book.genre_id}}">{{ book.genre.name }}</a></h5>
-    <div class="container">
-        <div class="row">
-            <div class="col-9">
-                <div class="alert alert-dark" role="alert"
-                     style="height:100%; word-wrap: normal; overflow: auto">
-                    {{ book.description }}
-                </div>
-            </div>
-            <div class="col">
-                {% if book.image %}
-                    <img class="book-img rounded" width="200" height="300" src="\{{ book.image }}"
-                         alt="{{ book.title }}">
-                {% else %}
-                    <img class="book-img rounded" width="200" height="300" src="/static/placeholder_book.jpg"
-                         alt="{{ book.title }}">
-                {% endif %}
+<br>
+<h1 style="color: #000000" align="center">{{ book.author }} - {{ book.title }}</h1>
+<h5 align="center"><a href="/books/genre/{{ book.genre_id }}">{{ book.genre.name }}</a></h5>
+<div class="container">
+    <div class="row">
+        <div class="col-9">
+            <div class="alert alert-dark" role="alert"
+                 style="height:100%; word-wrap: normal; overflow: auto">
+                {{ book.description }}
             </div>
         </div>
-        <div class="row">
-            <div class="col-9" align="center">
-                {% if book.file %}
-                    <form action="" method="post" novalidate>
-                        <br>
-                        <button type="submit" class="btn btn-primary" name="download">
-                            {% if 'user_id' in session %}
-                            Скачать
-                            {% else %}
-                            Войдите, чтобы скачать файл
-                            {% endif %}
-                        </button>
-                    </form>
-                {% endif %}
-            </div>
-            <div class="col">
-                <form action="" method="post" novalidate>
-                    <br>
-                    <button type="submit" class="btn btn-danger" name="like">
-                        {% if is_liked %}
-                            &#9829
-                        {% else %}
-                            &#9825
-                        {% endif %}
-                     Мне нравится
-                    </button>
-                </form>
-            </div>
-        </div>
-        <div style="margin-top: 20px">
-            <h4>Загрузил <a href="/users/{{book.uploader_id}}">{{ book.uploader.username }}</a></h4>
-        </div>
-        {% if moder %}
-        <div>
-            <a href="/books/edit/{{book.id}}">Редактировать</a><br>
-            <a href="/books/delete/{{book.id}}">Удалить</a>
-        </div>
-        {% endif %}
-
-        <br>
-        {% if 'user_id' in session %}
-            <form action="" method="post" novalidate>
-                {{ comment_form.hidden_tag() }}
-                {{ comment_form.field.label }}<br>
-                {{ comment_form.field(cols="60", rows="4") }}<br>
-                {{ comment_form.submit() }}
-                {% for error in comment_form.field.errors %}
-                    <div class="alert alert-danger" role="alert">
-                        {{ error }}
-                    </div>
-                {% endfor %}
-            </form>
-        {% else %}
-            <h5>Войдите, чтобы оставить комментарий</h5>
-        {% endif %}
-
-        <div style="margin-top: 20px">
-            {% for comment in comments %}
-                <div class="col-9">
-                    <div class="alert alert-dark" role="alert"
-                         style="height:100%; word-wrap: normal; overflow: auto">
-                        <h5><a href="/users/{{comment.user_id}}">{{ comment.user.username }}</a></h5>
-                        <h5>
-                            {% autoescape false %}
-                                {{ comment.text }}
-                            {% endautoescape %}
-                        </h5>
-                        {% if comment.can_delete %}
-                            <div align="right">
-                                <form action="" method="post" novalidate>
-                                    <button style="margin-left: 10px" type="submit" class="btn btn-primary" name="delete_comment" value="{{comment.id}}">Удалить</button>
-                                </form>
-                                <!--{% if comment.can_edit %}-->
-                                    <!--<form action="" method="post" novalidate>-->
-                                        <!--<button style="margin-left: 10px" type="submit" class="btn btn-primary" name="edit_comment">Редактировать</button>-->
-                                    <!--</form>-->
-                                <!--{% endif %}-->
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endfor %}
+        <div class="col">
+            {% if book.image %}
+                <img class="book-img rounded" width="200" height="300" src="\{{ book.image }}"
+                     alt="{{ book.title }}">
+            {% else %}
+                <img class="book-img rounded" width="200" height="300"
+                     src="/static/placeholder_book.jpg"
+                     alt="{{ book.title }}">
+            {% endif %}
         </div>
     </div>
+    <div class="row">
+        <div class="col-9" align="center">
+            {% if book.file %}
+                <form action="" method="post" novalidate>
+                    <br>
+                    <button type="submit" class="btn btn-primary" name="download">
+                        {% if 'user_id' in session %}
+                            Скачать
+                        {% else %}
+                            Войдите, чтобы скачать файл
+                        {% endif %}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+        <div class="col">
+            <form action="" method="post" novalidate>
+                <br>
+                <button type="submit" class="btn btn-danger" name="like">
+                    {% if is_liked %}
+                        &#9829
+                    {% else %}
+                        &#9825
+                    {% endif %}
+                    Мне нравится
+                </button>
+            </form>
+        </div>
+    </div>
+    <div style="margin-top: 20px">
+        <h4>Загрузил <a href="/users/{{ book.uploader_id }}">{{ book.uploader.username }}</a></h4>
+    </div>
+    {% if moder %}
+        <div>
+            <a href="/books/edit/{{ book.id }}">Редактировать</a><br>
+            <a href="/books/delete/{{ book.id }}">Удалить</a>
+        </div>
+    {% endif %}
+
+    <br>
+    {% if 'user_id' in session %}
+        <form action="" method="post" novalidate>
+            {{ comment_form.hidden_tag() }}
+            {{ comment_form.field.label }}<br>
+            {{ comment_form.field(cols="60", rows="4") }}<br>
+            {{ comment_form.submit() }}
+            {% for error in comment_form.field.errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endfor %}
+        </form>
+    {% else %}
+        <h5>Войдите, чтобы оставить комментарий</h5>
+    {% endif %}
+
+    <div style="margin-top: 20px">
+        {% for comment in comments %}
+        <div class="col-9">
+            <div class="alert alert-dark" role="alert"
+                 style="height:100%; word-wrap: normal; overflow: auto">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-9">
+                            <h5><a href="/users/{{ comment.user_id }}">{{ comment.user.username }}</a></h5>
+                        </div>
+                        <div class="col-1">
+                            {% if comment.edited %}
+                            Изменено
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <h5>
+                    {% autoescape false %}
+                    {{ comment.text }}
+                    {% endautoescape %}
+                </h5>
+
+                {% if comment.can_delete %}
+                    <div class="container">
+                        <div class="row justify-content-end">
+                            <div class="col-0">
+                                <form action="" method="post" novalidate>
+                                    <button style="margin-left: 10px" type="submit"
+                                            class="btn btn-primary"
+                                            name="delete_comment" value="{{ comment.id }}">Удалить
+                                    </button>
+                                </form>
+                            </div>
+                            {% if comment.can_edit %}
+                                <div class="col-0">
+                                    <form action="" method="post" novalidate>
+                                        <button style="margin-left: 10px" type="submit"
+                                                class="btn btn-primary" name="edit_comment"
+                                                value="{{ comment.id }}">
+                                            Редактировать
+                                        </button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 
 {% endblock %}

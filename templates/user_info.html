@@ -12,7 +12,7 @@
             {% if loop.index0 % columns == 0 %}
                 <div class="row">
             {% endif %}
-                    <a href="books/{{book.id}}" style="text-decoration: none; margin:20px"><div class=".col-md-4" align="center">
+                    <a href="/books/{{book.id}}" style="text-decoration: none; margin:20px"><div class=".col-md-4" align="center">
                         <img class="book-img rounded" width="200" height="300" src="\{{ book.image }}" alt="{{ book.title }}">
                     <br>
                         <h4 style="color: #000000">{{ book.title }}<br>{{ book.author }}</h4>

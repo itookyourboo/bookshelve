@@ -75,6 +75,7 @@ class Comment(db.Model):
     user = db.relationship('User', backref=db.backref('comments', lazy=True))
     book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=False)
     text = db.Column(db.String(1000))
+    edited = db.Column(db.Boolean)
 
     can_delete = False
     can_edit = False

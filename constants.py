@@ -4,7 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
 import os
 
-
 DATABASE_NAME = "library.db"
 TITLE = "bookshelve"
 STATUSES = {

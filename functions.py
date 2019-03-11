@@ -19,13 +19,15 @@ def is_moder(session):
 def can_edit_book(session, book_id):
     if 'user_id' not in session:
         return False
-    return is_moder(session) or Book.query.filter_by(id=book_id, uploader_id=session['user_id']).first()
+    return is_moder(session) or Book.query.filter_by(id=book_id,
+                                                     uploader_id=session['user_id']).first()
 
 
 def can_delete_comment(session, comment_id):
     if 'user_id' not in session:
         return False
-    return is_moder(session) or Comment.query.filter_by(id=comment_id, user_id=session['user_id']).first()
+    return is_moder(session) or Comment.query.filter_by(id=comment_id,
+                                                        user_id=session['user_id']).first()
 
 
 def can_edit_comment(session, comment_id):
@@ -101,7 +103,7 @@ def get_info(user_id):
     username, books_count = user.username, books
 
     return f"ID{user_id}: {username} ({status}).<br>Загрузил книг: {books_count}<br>" \
-           f"Получил лайков: {liked}<br>Поставил лайков: {likes}<br>Оставил комментариев: {comments}"
+        f"Получил лайков: {liked}<br>Поставил лайков: {likes}<br>Оставил комментариев: {comments}"
 
 
 # Бан пользователя, его книг и лайков
@@ -216,7 +218,7 @@ def transliterate(string):
 # Удаление книги и лайков на ней
 def delete_book(book_id):
     book = Book.query.filter_by(id=book_id).first()
-    db.session.query(Like).filter(Like.book_id==book.id).delete()
+    db.session.query(Like).filter(Like.book_id == book.id).delete()
     db.session.delete(book)
     shutil.rmtree(f'static/books/{book.id}', ignore_errors=True)
     db.session.commit()
@@ -269,7 +271,7 @@ def get_sorted_books(sort, genre_id=None):
 
 
 def get_upload_top():
-    books = Book.query.with_entities(Book.uploader_id, func.count(Book.uploader_id))\
+    books = Book.query.with_entities(Book.uploader_id, func.count(Book.uploader_id)) \
         .group_by(Book.uploader_id).all()
     return sorted([{
         'user_id': book[0],
@@ -279,7 +281,7 @@ def get_upload_top():
 
 
 def get_liked_top():
-    likes = Like.query.with_entities(Like.user_id, func.count(Like.user_id))\
+    likes = Like.query.with_entities(Like.user_id, func.count(Like.user_id)) \
         .group_by(Like.user_id).all()
     return sorted([{
         'user_id': like[0],
@@ -329,5 +331,6 @@ def get_searched_books(search, genre_id=None):
     if search is None or search == 'None' or search == '':
         return query.all()
     keys = [Book.title, Book.author, Book.description]
-    result = reduce(lambda a, x: a + x, [query.filter(key.like(f'%{search}%')).all() for key in keys])
+    result = reduce(lambda a, x: a + x,
+                    [query.filter(key.like(f'%{search}%')).all() for key in keys])
     return list(set(result))

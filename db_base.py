@@ -4,7 +4,6 @@ import functions
 
 from werkzeug.security import generate_password_hash
 
-
 genres = [
     'Художественная литература',
     'Книги для детей',
@@ -88,5 +87,3 @@ def add_user(username, password):
                 password_hash=generate_password_hash(password))
     db.session.add(user)
     db.session.commit()
-
-
