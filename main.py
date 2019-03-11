@@ -10,7 +10,7 @@ from flask import request, redirect, url_for, render_template
 from forms import *
 from werkzeug.security import check_password_hash, generate_password_hash
 import os
-from functions import transliterate, like, get_sorted_books
+from functions import transliterate, like, get_sorted_books, get_searched_books
 
 
 add_all()
@@ -23,11 +23,19 @@ def index():
     search_form = SearchForm()
     books = get_sorted_books(form.sorting.data)
 
-    if form.validate_on_submit():
-        books = get_sorted_books(form.sorting.data)
-        return render_template('index.html', title=TITLE, session=session,
-                               books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                               genres=get_genres(), index_title='Все книги', search_form=search_form)
+    if request.method == 'POST':
+        if form.sort.data:
+            books = get_sorted_books(form.sorting.data)
+            return render_template('index.html', title=TITLE, session=session,
+                                   books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
+                                   genres=get_genres(), index_title='Все книги', search_form=search_form)
+
+        if search_form.search.data:
+            books = get_searched_books(search_form.field.data)
+            print(books)
+            return render_template('index.html', title=TITLE, session=session,
+                                   books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
+                                   genres=get_genres(), index_title='Все книги', search_form=search_form)
 
     return render_template('index.html', title=TITLE, session=session,
                            books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
@@ -214,17 +222,24 @@ def delete_book(book_id):
 def books_genre(genre_id):
     genre_name = Genre.query.filter_by(id=genre_id).first().name
     form = SortForm(sorting=SORT_DEFAULT[0])
+    search_form = SearchForm()
     books = get_sorted_books(form.sorting.data, genre_id=genre_id)
 
-    if form.validate_on_submit():
-        books = get_sorted_books(form.sorting.data, genre_id=genre_id)
-        return render_template('index.html', title=TITLE, session=session,
-                               books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                               genres=get_genres(), index_title=genre_name)
+    if request.method == 'POST':
+        if form.sort.data:
+            books = get_sorted_books(form.sorting.data, genre_id=genre_id)
+            return render_template('index.html', title=TITLE, session=session,
+                                   books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
+                                   genres=get_genres(), index_title=genre_name, search_form=search_form)
+        if search_form.search.data:
+            books = get_searched_books(search_form.field.data, genre_id=genre_id)
+            return render_template('index.html', title=TITLE, session=session,
+                                   books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
+                                   genres=get_genres(), index_title=genre_name, search_form=search_form)
 
     return render_template('index.html', title=TITLE, session=session,
                            books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                           genres=get_genres(), index_title=genre_name)
+                           genres=get_genres(), index_title=genre_name, search_form=search_form)
 
 
 @app.route('/admin', methods=['GET', 'POST'])

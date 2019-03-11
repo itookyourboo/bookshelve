@@ -276,3 +276,12 @@ def get_likes_top():
 def get_user_likes(user_id):
     return reduce(lambda a, x: a + x,
                   [get_likes(book.id) for book in Book.query.filter_by(uploader_id=user_id).all()])
+
+
+def get_searched_books(search, genre_id=None):
+    query = (Book.query.filter_by(genre_id=genre_id) if genre_id else Book.query)
+    if search is None or search == 'None' or search == '':
+        return query.all()
+    keys = [Book.title, Book.author, Book.description]
+    result = reduce(lambda a, x: a + x, [query.filter(key.like(f'%{search}%')).all() for key in keys])
+    return list(set(result))
