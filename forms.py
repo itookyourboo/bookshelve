@@ -43,8 +43,7 @@ class AddBookForm(FlaskForm):
         DataRequired(message='Поле обязательно для заполнения'),
         Length(max=1000, message='Описание должно быть не длинее 1000 символов')])
 
-    genre = SelectField('Жанр', coerce=int,
-                        choices=[(genre.id, genre.name) for genre in get_genres()])
+    genre = SelectField('Жанр', coerce=int)
 
     image = FileField('Обложка', validators=[
         FileRequired('Поле обязательно для заполнения'),
@@ -70,8 +69,7 @@ class EditBookForm(FlaskForm):
     description = TextAreaField('Описание книги', validators=[
         Length(max=1000, message='Описание должно быть не длинее 1000 символов')])
 
-    genre = SelectField('Жанр', coerce=int,
-                        choices=[(genre.id, genre.name) for genre in get_genres()])
+    genre = SelectField('Жанр', coerce=int)
 
     image = FileField('Обложка', validators=[
         FileAllowed(list(ALLOWED_IMAGES_EXTENSIONS),
@@ -104,3 +102,8 @@ class InfoForm(FlaskForm):
 class SortForm(FlaskForm):
     sorting = SelectField('Сортировка', choices=SORT_BOOKS)
     sort = SubmitField('Сортировать')
+
+
+class SearchForm(FlaskForm):
+    field = StringField('Поиск')
+    search = SubmitField('Найти')

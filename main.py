@@ -1,57 +1,37 @@
+from sqlalchemy import func
+
 import functions
 from dbhelper import *
 from constants import *
+from db_base import add_all
 
-from flask import Flask, session, send_from_directory, send_file
+from flask import session, send_file
 from flask import request, redirect, url_for, render_template
-# from forms import LoginForm, RegisterForm, AddBookForm, StatusForm
 from forms import *
 from werkzeug.security import check_password_hash, generate_password_hash
-from werkzeug.utils import secure_filename
 import os
 from functions import transliterate, like, get_sorted_books
 
 
-if not len(User.query.all()):
-    admin = User(username=MAIN_ADMIN[0],
-                 password_hash=generate_password_hash(MAIN_ADMIN[1]))
-    db.session.add(admin)
-    db.session.commit()
-    print(functions.change_status(admin.id, STATUSES['admin']))
-
-
-# functions.delete_all_genres()
-# functions.add_genre('Художественная литература')
-# functions.add_genre('Книги для детей')
-# functions.add_genre('Образование')
-# functions.add_genre('Наука и техника')
-# functions.add_genre('Общество')
-# functions.add_genre('Деловая литература')
-# functions.add_genre('Красота. Здоровье. Спорт')
-# functions.add_genre('Увлечения')
-# functions.add_genre('Психология')
-# functions.add_genre('Эзотерика')
-# functions.add_genre('Философия и религия')
-# functions.add_genre('Искусство')
-# functions.add_genre('Подарочные издания')
-# functions.add_genre('Книги на иностранных языках')
+add_all()
 
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/books', methods=['GET', 'POST'])
 def index():
     form = SortForm(sorting=SORT_DEFAULT[0])
+    search_form = SearchForm()
     books = get_sorted_books(form.sorting.data)
 
     if form.validate_on_submit():
         books = get_sorted_books(form.sorting.data)
         return render_template('index.html', title=TITLE, session=session,
                                books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                               genres=get_genres(), index_title='Все книги')
+                               genres=get_genres(), index_title='Все книги', search_form=search_form)
 
     return render_template('index.html', title=TITLE, session=session,
                            books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
-                           genres=get_genres(), index_title='Все книги')
+                           genres=get_genres(), index_title='Все книги', search_form=search_form)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -99,6 +79,7 @@ def add_book():
         return redirect('/login')
 
     form = AddBookForm()
+    form.genre.choices = [(genre.id, genre.name) for genre in get_genres()]
     if form.validate_on_submit():
         img_name, file_name = form.image.data.filename, form.file.data.filename
         if '.' in img_name and '.' in file_name:
@@ -150,7 +131,7 @@ def get_book(book_id):
 
     moder, is_liked = False, False
     if 'user_id' in session:
-        is_liked = bool(Like.query.filter_by(user_id=session['user_id']).first())
+        is_liked = bool(Like.query.filter_by(book_id=book_id, user_id=session['user_id']).first())
         moder = Moder.query.filter_by(user_id=session['user_id']).first() or book.uploader_id == session['user_id']
 
     return render_template('book.html', title=book.title, book=book,
@@ -164,6 +145,7 @@ def edit_book(book_id):
 
     book = Book.query.filter_by(id=book_id).first()
     form = EditBookForm(title=book.title, author=book.author, description=book.description, genre=book.genre_id)
+    form.genre.choices = [(genre.id, genre.name) for genre in get_genres()]
 
     if form.validate_on_submit():
         if form.image.data:
@@ -311,6 +293,14 @@ def user(user_id):
 
     return render_template('user_info.html', title=user.username, info=functions.get_info(user_id),
                            books=books, columns=app.config['BOOKS_COLUMNS'])
+
+
+@app.route('/top')
+def top():
+    return render_template('top.html', title='Топ пользователей',
+                           upload_list=functions.get_upload_top(),
+                           liked_list=functions.get_liked_top(),
+                           likes_list=functions.get_likes_top())
 
 
 if __name__ == '__main__':

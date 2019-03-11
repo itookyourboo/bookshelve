@@ -1,8 +1,9 @@
+from sqlalchemy import func
+
 from constants import db, STATUSES, SORT_DEFAULT
 from dbhelper import *
 import shutil
-from werkzeug.security import generate_password_hash, \
-    check_password_hash
+from functools import reduce
 
 
 # Проверка на админа
@@ -83,9 +84,11 @@ def get_info(user_id):
 
     books = Book.query.filter_by(uploader_id=user_id).count()
     likes = Like.query.filter_by(user_id=user_id).count()
+    liked = get_user_likes(user_id)
     username, books_count = user.username, books
 
-    return f"ID{user_id}: {username} ({status}).<br>Загрузил книг: {books_count}<br>Поставил лайков: {likes}"
+    return f"ID{user_id}: {username} ({status}).<br>Загрузил книг: {books_count}<br>" \
+           f"Получил лайков: {liked}<br>Поставил лайков: {likes}"
 
 
 # Бан пользователя, его книг и лайков
@@ -112,6 +115,10 @@ def ban_user(user_id):
     return 'Пользователь успешно забанен'
 
 
+def user_exists(username):
+    return bool(User.query.filter_by(username=username).first())
+
+
 # Поставить лайк / убрать лайк
 def like(user_id, book_id):
     like = Like.query.filter_by(user_id=user_id, book_id=book_id).first()
@@ -125,12 +132,6 @@ def like(user_id, book_id):
 # Количество лайков у книги
 def get_likes(book_id):
     return Like.query.filter_by(book_id=book_id).count()
-
-
-# Добавление жанра
-def add_genre(name):
-    db.session.add(Genre(name=name))
-    db.session.commit()
 
 
 # Изменение названия жанра
@@ -236,3 +237,42 @@ def get_sorted_books(sort, genre_id=None):
             book.image = 'static/placeholder_book.jpg'
         book.likes = get_likes(book.id)
     return books
+
+
+def get_upload_top():
+    books = Book.query.with_entities(Book.uploader_id, func.count(Book.uploader_id))\
+        .group_by(Book.uploader_id).all()
+    return sorted([{
+        'user_id': book[0],
+        'username': User.query.filter_by(id=book[0]).first().username,
+        'count': book[1]
+    } for book in books], key=lambda x: -x['count'])
+
+
+def get_liked_top():
+    likes = Like.query.with_entities(Like.user_id, func.count(Like.user_id))\
+        .group_by(Like.user_id).all()
+    return sorted([{
+        'user_id': like[0],
+        'username': User.query.filter_by(id=like[0]).first().username,
+        'count': like[1]
+    } for like in likes], key=lambda x: -x['count'])
+
+
+def get_likes_top():
+    result = {}
+    books = Book.query.all()
+    for book in books:
+        user_id = book.uploader_id
+        result[user_id] = get_user_likes(user_id)
+
+    return sorted([{
+        'user_id': id,
+        'username': User.query.filter_by(id=id).first().username,
+        'count': result[id]
+    } for id in result], key=lambda x: -x['count'])
+
+
+def get_user_likes(user_id):
+    return reduce(lambda a, x: a + x,
+                  [get_likes(book.id) for book in Book.query.filter_by(uploader_id=user_id).all()])

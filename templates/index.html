@@ -1,15 +1,15 @@
 {% extends "base.html" %}
  
 {% block content %}
-<header style="background-color: #e3f2fd;">
+<header style="background-color: #e3f2fd; padding-top: 10px; padding-bottom: 10px; padding-left: 25px">
     <div class="row">
         <form action="" method="post" enctype="multipart/form-data" novalidate>
             {{ sort_form.hidden_tag() }}
-            {{ sort_form.sorting }}<br>
-            {{ sort_form.sort() }}
+            {{ sort_form.sorting }}
+            {{ sort_form.sort(class_="btn btn-primary") }}
         </form>
-        <div class="btn-group">
-            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <div class="btn-group" style="margin-left: 20px">
+            <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 Жанры
             </button>
             <div class="dropdown-menu">
@@ -18,6 +18,14 @@
                 {% endfor %}
             </div>
         </div>
+        <div align="right" style="margin-left: 20px">
+            <form action="" method="post" enctype="multipart/form-data" novalidate>
+                {{ search_form.hidden_tag() }}
+                {{ search_form.field(placeholder="Поиск...") }}
+                {{ search_form.search(class_="btn btn-primary") }}
+            </form>
+        </div>
+        <a style="margin-left: 20px" class="btn btn-primary" href="/top">Топ пользователей</a>
     </div>
 </header>
     <br>

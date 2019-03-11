@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 align="center">Топ пользователей</h3>
+<div class="row" align="center">
+    <div style="margin: 20px" align="center">
+        <h4>По загрузке</h4>
+        <table border="1px" cellpadding="10px">
+        <th>№</th>
+        <th>Пользователь</th>
+        <th>Загрузил книг</th>
+        {% for info in upload_list %}
+            <tr>
+                <td>{{loop.index0+1}}</td>
+                <td><a href="/users/{{info['user_id']}}">{{info['username']}}</a></td>
+                <td>{{info['count']}}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    </div>
+    <div style="margin: 20px" align="center">
+        <h4>По поставленным лайкам</h4>
+        <table border="1px" cellpadding="10px">
+        <th>№</th>
+        <th>Пользователь</th>
+        <th>Поставил лайков</th>
+        {% for info in liked_list %}
+            <tr>
+                <td>{{loop.index0+1}}</td>
+                <td><a href="/users/{{info['user_id']}}">{{info['username']}}</a></td>
+                <td>{{info['count']}}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    </div>
+    <div style="margin: 20px" align="center">
+            <h4>По полученным лайкам</h4>
+            <table border="1px" cellpadding="10px">
+            <th>№</th>
+            <th>Пользователь</th>
+            <th>Получил лайков</th>
+            {% for info in likes_list %}
+                <tr>
+                    <td>{{loop.index0+1}}</td>
+                    <td><a href="/users/{{info['user_id']}}">{{info['username']}}</a></td>
+                    <td>{{info['count']}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        </div>
+</div>
+{% endblock %}
