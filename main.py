@@ -11,6 +11,7 @@ from forms import *
 from werkzeug.security import check_password_hash, generate_password_hash
 import os
 from functions import transliterate, like, get_sorted_books, get_searched_books
+import api
 
 add_all()
 
