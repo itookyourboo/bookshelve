@@ -40,7 +40,6 @@ def can_edit_comment(session, comment_id):
 def change_status(user_id, status):
     moder = Moder.query.filter_by(user_id=user_id).first()
     admin = Admin.query.filter_by(user_id=user_id).first()
-    print(status)
     if admin:
         if admin.id == 1:
             return 'Вы не можете изменить должность главного администратора'

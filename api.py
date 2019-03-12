@@ -76,7 +76,6 @@ class BooksApi(Resource):
 
         if book.uploader_id != tokens_ids.get(args['token']) and dbhelper.Moder.query.filter_by(
                 user_id=tokens_ids.get(args['token'])).first() is None:
-            print(book.uploader_id, tokens_ids.get(args['token']))
             return jsonify({'error': 'access denied'})
 
         if args['title']:
@@ -266,7 +265,6 @@ class UsersListApi(Resource):
             return jsonify({'error': 'login or password have the wrong length'})
         if args['action'] == 'register':
             if dbhelper.User.query.filter_by(username=args['username']).first() is not None:
-                print(dbhelper.User.query.filter_by(username=args['username']).first())
                 return jsonify({'error': 'user "{}" already exists'.format(args['username'])})
             user = dbhelper.User(username=args['username'],
                                  password_hash=generate_password_hash(args['password']))
