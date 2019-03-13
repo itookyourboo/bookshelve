@@ -9,11 +9,13 @@ import string
 import random
 import functions
 
+# Набор символов токена
 TOKEN_CHARSET = list(string.ascii_lowercase + string.ascii_uppercase + string.digits)
 tokens_ids, ids_tokens = {}, {}
 
 
 def generate_token(user_id):
+    """Генерирует и записывает токен"""
     token = ''.join(random.choice(TOKEN_CHARSET) for i in range(16))
     while token in tokens_ids:
         token = ''.join(random.choice(TOKEN_CHARSET) for i in range(16))
@@ -42,7 +44,7 @@ class BooksApi(Resource):
     put_parser.add_argument('image')
     put_parser.add_argument('image_format')
 
-    def get(self, book_id):  # Получить информацию о книге
+    def get(self, book_id):  # Получить полную информацию о книге
         args = BooksApi.get_parser.parse_args()
         book = abort_if_book_not_found(book_id)
         json = {'id': book.id, 'title': book.title, 'author': book.author,
@@ -209,7 +211,7 @@ class UserApi(Resource):
     put_parser = delete_parser.copy()
     put_parser.add_argument('status', required=True)
 
-    def get(self, user_id):  # Информация о пользователе
+    def get(self, user_id):  # Подробная информация о пользователе
         user = abort_if_user_not_found(user_id)
         books = dbhelper.Book.query.filter_by(uploader_id=user_id).order_by(
             dbhelper.Book.id.desc()).all()
@@ -231,7 +233,8 @@ class UserApi(Resource):
         functions.ban_user(user_id)
         return jsonify({'success': 'OK'})
 
-    def put(self, user_id):  # Изменить статус пользователя
+    def put(self, user_id):
+        """Изменить статус пользователя на Пользователь | Модератор | Администратор"""
         args = UserApi.put_parser.parse_args()
         if dbhelper.Admin.query.filter_by(user_id=tokens_ids.get(args['token'])).first() is None:
             return jsonify({'error': 'access denied'})
@@ -252,6 +255,7 @@ class UsersListApi(Resource):
     get_parser.add_argument('criterion', required=True)
 
     def get(self):
+        """Возвращает топ пользователей по различным критериям"""
         args = UsersListApi.get_parser.parse_args()
         tops = {'upload': functions.get_upload_top, 'liked': functions.get_liked_top,
                 'likes': functions.get_likes_top, 'commented': functions.get_commented_top}
@@ -282,6 +286,7 @@ class UsersListApi(Resource):
 
 
 def abort_if_book_not_found(book_id):
+    """Прерывает выполнение в случае неправильного id книги"""
     book = dbhelper.Book.query.filter_by(id=book_id).first()
     if book:
         return book
@@ -289,6 +294,7 @@ def abort_if_book_not_found(book_id):
 
 
 def abort_if_user_not_found(user_id):
+    """Прерывает выполнение в случае неправильного id пользователя"""
     user = dbhelper.User.query.filter_by(id=user_id).first()
     if user:
         return user

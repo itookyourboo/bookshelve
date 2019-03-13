@@ -16,6 +16,7 @@ def is_moder(session):
     return 'user_id' in session and Moder.query.filter_by(user_id=session['user_id']).first()
 
 
+# Проверка возможность редактирования книги
 def can_edit_book(session, book_id):
     if 'user_id' not in session:
         return False
@@ -23,6 +24,7 @@ def can_edit_book(session, book_id):
                                                      uploader_id=session['user_id']).first()
 
 
+# Проверка возможность удаления комментария
 def can_delete_comment(session, comment_id):
     if 'user_id' not in session:
         return False
@@ -30,6 +32,7 @@ def can_delete_comment(session, comment_id):
                                                         user_id=session['user_id']).first()
 
 
+# Проверка возможность редактирования комментария
 def can_edit_comment(session, comment_id):
     if 'user_id' not in session:
         return False
@@ -71,8 +74,6 @@ def change_status(user_id, status):
             db.session.add(Admin(user_id=user_id))
             db.session.commit()
         return 'Статус изменён'
-
-    return 'непонел'
 
 
 # Статус пользователя
@@ -186,6 +187,7 @@ def edit_book(id, **keys):
     db.session.commit()
 
 
+# Создание имени файла из названия книги
 def transliterate(string):
     capital_letters = {'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'E',
                        'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N',
@@ -229,11 +231,13 @@ def delete_all_books():
     db.session.commit()
 
 
+# Удаление всех жанров
 def delete_all_genres():
     db.session.query(Genre).delete()
     db.session.commit()
 
 
+# Сортировка и фильтрация книг по жанрам
 def get_sorted_books(sort, genre_id=None):
     if sort is None or sort == 'None':
         sort = SORT_DEFAULT[0]
@@ -269,6 +273,7 @@ def get_sorted_books(sort, genre_id=None):
     return books
 
 
+# Сортировка пользователей по количеству загруженных книг
 def get_upload_top():
     books = Book.query.with_entities(Book.uploader_id, func.count(Book.uploader_id)) \
         .group_by(Book.uploader_id).all()
@@ -279,6 +284,7 @@ def get_upload_top():
     } for book in books], key=lambda x: -x['count'])
 
 
+# Сортировка пользователей по количеству поставленных лайков
 def get_liked_top():
     likes = Like.query.with_entities(Like.user_id, func.count(Like.user_id)) \
         .group_by(Like.user_id).all()
@@ -289,6 +295,7 @@ def get_liked_top():
     } for like in likes], key=lambda x: -x['count'])
 
 
+# Сортировка пользователей по количеству оставленных комментариев
 def get_commented_top():
     comments = Comment.query.with_entities(Comment.user_id, func.count(Comment.user_id)) \
         .group_by(Comment.user_id).all()
@@ -299,6 +306,7 @@ def get_commented_top():
     } for comment in comments], key=lambda x: -x['count'])
 
 
+# Сортировка пользователей по количеству полученных лайков
 def get_likes_top():
     result = {}
     books = Book.query.all()
@@ -313,6 +321,7 @@ def get_likes_top():
     } for id in result], key=lambda x: -x['count'])
 
 
+# Подсчитать количество полученных пользователем лайков
 def get_user_likes(user_id):
     books = Book.query.filter_by(uploader_id=user_id).all()
     result = 0
@@ -321,10 +330,12 @@ def get_user_likes(user_id):
     return result
 
 
+# Подсчитать количество оставленных пользователем комментов
 def get_user_comments(user_id):
     return Comment.query.filter_by(user_id=user_id).count()
 
 
+# Поиск книг
 def get_searched_books(search, genre_id=None):
     query = (Book.query.filter_by(genre_id=genre_id) if genre_id else Book.query)
     if search is None or search == 'None' or search == '':

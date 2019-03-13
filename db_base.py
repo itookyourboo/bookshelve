@@ -23,7 +23,7 @@ genres = [
 
 ADMINS = [
     ('mainadmin', 'admin007')
-]
+]  # Аккаунт главного админа. Нельзя лишить полномочий.
 
 MODERS = [
     ('moderhino', 'moderhino'),
@@ -37,6 +37,8 @@ USERS = [
     ('book1love', 'book1love')
 ]
 
+
+# Функции ниже инициализируют таблицы.
 
 def add_all():
     add_genres()

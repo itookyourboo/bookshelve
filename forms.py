@@ -7,7 +7,7 @@ from constants import *
 from functions import get_genres
 
 
-class LoginForm(FlaskForm):
+class LoginForm(FlaskForm):  # Форма входа
     username = StringField('Логин', validators=[
         DataRequired(message='Поле обязательно для заполнения'),
         Length(min=6, max=32, message='Логин должен быть длиной от 6 до 32 символов')])
@@ -17,7 +17,7 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Войти')
 
 
-class RegisterForm(FlaskForm):
+class RegisterForm(FlaskForm):  # Форма регистрации
     username = StringField('Логин', validators=[
         DataRequired(message='Поле обязательно для заполнения'),
         Length(min=6, max=32, message='Логин должен быть длиной от 6 до 32 символов')])
@@ -31,7 +31,7 @@ class RegisterForm(FlaskForm):
     submit = SubmitField('Зарегистрироваться')
 
 
-class AddBookForm(FlaskForm):
+class AddBookForm(FlaskForm):  # Форма добавления книги
     title = StringField('Название', validators=[
         DataRequired(message='Поле обязательно для заполнения'),
         Length(max=80, message='Название должно быть не длинее 80 символов')])
@@ -60,7 +60,7 @@ class AddBookForm(FlaskForm):
     submit = SubmitField('Загрузить')
 
 
-class EditBookForm(FlaskForm):
+class EditBookForm(FlaskForm):  # Форма редактирования книги
     title = StringField('Название', validators=[
         Length(max=80, message='Название должно быть не длинее 80 символов')])
 
@@ -84,36 +84,36 @@ class EditBookForm(FlaskForm):
     submit = SubmitField('Редактировать')
 
 
-class StatusForm(FlaskForm):
+class StatusForm(FlaskForm):  # Администраторская форма изменения статуса пользователей
     status_field = IntegerField('ID', validators=[
         DataRequired(message='Поле обязательно для заполнения')])
     status_select = SelectField(choices=[(a, a) for a in list(STATUSES.values())])
     status_submit = SubmitField('OK')
 
 
-class BanForm(FlaskForm):
+class BanForm(FlaskForm):  # Администраторская форма бана пользователей
     ban_field = IntegerField('ID',
                              validators=[DataRequired(message='Поле обязательно для заполнения')])
     ban_submit = SubmitField('OK')
 
 
-class InfoForm(FlaskForm):
+class InfoForm(FlaskForm):  # Администраторская форма удобного получения информации о пользователе
     info_field = IntegerField('ID',
                               validators=[DataRequired(message='Поле обязательно для заполнения')])
     info_submit = SubmitField('OK')
 
 
-class SortForm(FlaskForm):
+class SortForm(FlaskForm):  # Форма сортировки в шапке
     sorting = SelectField('Сортировка', choices=SORT_BOOKS)
     sort = SubmitField('Сортировать')
 
 
-class SearchForm(FlaskForm):
+class SearchForm(FlaskForm):  # Форма поиска в шапке
     field = StringField('Поиск')
     search = SubmitField('Найти')
 
 
-class CommentForm(FlaskForm):
+class CommentForm(FlaskForm):  # Форма для создания и редактирования комментариев
     field = TextAreaField('Оставить комментарий', validators=[
         Length(min=20, message='Комментарий должен быть не короче 20 символов')
     ])
