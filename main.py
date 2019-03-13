@@ -115,7 +115,7 @@ def add_book():
                 book.file = os.path.join(path, transliterate(
                     '_'.join(book.title.split())) + '.' + file_ext)
                 with open(book.file, 'wb') as f:
-                    f.write(request.files[form.image.name].read())
+                    f.write(request.files[form.file.name].read())
                 db.session.commit()
                 return redirect('/')
 
