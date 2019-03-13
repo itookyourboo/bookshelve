@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+ 
+{% block content %}
+<header style="background-color: #e3f2fd; padding-top: 10px; padding-bottom: 10px; padding-left: 25px">
+    <div class="row">
+        <form action="" method="post" enctype="multipart/form-data" novalidate>
+            {{ sort_form.hidden_tag() }}
+            {{ sort_form.sorting }}
+            {{ sort_form.sort(class_="btn btn-primary") }}
+        </form>
+        <div class="btn-group" style="margin-left: 20px">
+            <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Жанры
+            </button>
+            <div class="dropdown-menu">
+                {% for genre in genres %}
+                    <a class="dropdown-item" href="/books/genre/{{genre.id}}">{{genre.name}}</a>
+                {% endfor %}
+            </div>
+        </div>
+        <div align="right" style="margin-left: 20px">
+            <form action="" method="post" enctype="multipart/form-data" novalidate>
+                {{ search_form.hidden_tag() }}
+                {{ search_form.field(placeholder="Поиск...") }}
+                {{ search_form.search(class_="btn btn-primary") }}
+            </form>
+        </div>
+        <a style="margin-left: 20px" class="btn btn-primary" href="/top">Топ пользователей</a>
+    </div>
+</header>
+    <br>
+    <h4>{{ index_title }}</h4>
+    {% for book in books %}
+        {% if loop.index0 % columns == 0 %}
+        <div class="row">
+        {% endif %}
+            <a href="http://127.0.0.1:8000/books/{{book.id}}" style="text-decoration: none; margin:20px"><div class=".col-md-4" align="center">
+                <img class="book-img rounded" width="200" height="300" src="\{{ book.image }}" alt="{{ book.title }}">
+            <br>
+                <h4 style="color: #000000">{{ book.title }}<br>{{ book.author }}</h4>
+                <h5 style="color: #000000">&#9829; {{ book.likes }} &#128489; {{ book.comments }}</h5>
+            </div></a>
+        {% if loop.index0 % columns == columns - 1 %}
+        </div><!-- /row -->
+        {% endif %}
+    {% endfor %}
+    {% if not books %}
+        <h5>Ничего не найдено</h5>
+    {% endif %}
+{% endblock %}
