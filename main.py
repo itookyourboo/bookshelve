@@ -10,7 +10,7 @@ from flask import request, redirect, url_for, render_template
 from forms import *
 from werkzeug.security import check_password_hash, generate_password_hash
 import os
-from functions import transliterate, like, get_sorted_books, get_searched_books
+from functions import transliterate, like, get_sorted_books
 import api
 
 add_all()
@@ -32,7 +32,7 @@ def index():
                                    search_form=search_form)
 
         if search_form.search.data:
-            books = get_searched_books(search_form.field.data)
+            books = get_sorted_books(form.sorting.data, search=search_form.field.data)
             return render_template('index.html', title=TITLE, session=session,
                                    books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
                                    genres=get_genres(), index_title='Все книги',
@@ -278,7 +278,8 @@ def books_genre(genre_id):
                                    genres=get_genres(), index_title=genre_name,
                                    search_form=search_form)
         if search_form.search.data:
-            books = get_searched_books(search_form.field.data, genre_id=genre_id)
+            books = get_sorted_books(form.sorting.data, search=search_form.field.data,
+                                     genre_id=genre_id)
             return render_template('index.html', title=TITLE, session=session,
                                    books=books, columns=app.config['BOOKS_COLUMNS'], sort_form=form,
                                    genres=get_genres(), index_title=genre_name,
@@ -354,6 +355,7 @@ def user(user_id):
         if not book.image:
             book.image = 'static/placeholder_book.jpg'
         book.likes = functions.get_likes(book.id)
+        book.comments = functions.get_comments(book.id)
 
     return render_template('user_info.html', title=user.username, info=functions.get_info(user_id),
                            books=books, columns=app.config['BOOKS_COLUMNS'])
@@ -365,7 +367,8 @@ def top():
                            upload_list=functions.get_upload_top(),
                            liked_list=functions.get_liked_top(),
                            commented_list=functions.get_commented_top(),
-                           likes_list=functions.get_likes_top())
+                           likes_list=functions.get_likes_top(),
+                           top_n=TOP_N)
 
 
 if __name__ == '__main__':

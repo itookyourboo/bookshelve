@@ -26,14 +26,14 @@ ADMINS = [
 ]  # Аккаунт главного админа. Нельзя лишить полномочий.
 
 MODERS = [
-    ('moderhino', 'moderhino'),
+    ('moder007', 'moder007'),
     ('m0der4tor', 'm0der4tor')
 ]
 
 USERS = [
     ('useruser', 'useruser'),
     ('user1234', 'user1234'),
-    ('polzovatel', 'polzovatel'),
+    ('bookworm', 'bookworm'),
     ('book1love', 'book1love')
 ]
 

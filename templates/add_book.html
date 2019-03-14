@@ -6,7 +6,11 @@
         {% for field in [form.title, form.author, form.description, form.genre, form.image, form.file] %}
             <p>
                 {{ field.label }}<br>
-                {{ field }}<br>
+                {% if field == form.description %}
+                    {{ field(cols="70", rows="6") }}
+                {% else %}
+                    {{ field }}
+                {% endif %}<br>
                 {% for error in field.errors %}
                     <div class="alert alert-danger" role="alert">
                         {{ error }}

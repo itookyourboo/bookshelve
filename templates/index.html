@@ -30,21 +30,32 @@
 </header>
     <br>
     <h4>{{ index_title }}</h4>
+    <div class="container" align="center">
     {% for book in books %}
         {% if loop.index0 % columns == 0 %}
         <div class="row">
         {% endif %}
-            <a href="http://127.0.0.1:8000/books/{{book.id}}" style="text-decoration: none; margin:20px"><div class=".col-md-4" align="center">
+            <a href="http://127.0.0.1:8000/books/{{book.id}}" style="text-decoration: none; margin:20px"><div class="col-sm" align="center">
                 <img class="book-img rounded" width="200" height="300" src="\{{ book.image }}" alt="{{ book.title }}">
             <br>
-                <h4 style="color: #000000">{{ book.title }}<br>{{ book.author }}</h4>
-                <h5 style="color: #000000">&#9829; {{ book.likes }} &#128489; {{ book.comments }}</h5>
+                <h7 style="color: #000000">{% if book.title|length > 20 %}
+                                    {{ book.title[:20] + '...' }}
+                                {% else %}
+                                    {{ book.title }}
+                                {% endif %}
+                    <br><h7>{% if book.author|length > 20 %}
+                                    {{ book.author[:20] + '...' }}
+                                {% else %}
+                                    {{ book.author }}
+                                {% endif %}</h7><br>
+                <h7 style="color: #000000">&#9829; {{ book.likes }} &#128489; {{ book.comments }}</h7>
             </div></a>
         {% if loop.index0 % columns == columns - 1 %}
-        </div><!-- /row -->
+        </div>
         {% endif %}
     {% endfor %}
     {% if not books %}
         <h5>Ничего не найдено</h5>
     {% endif %}
+    </div>
 {% endblock %}
